@@ -4,27 +4,34 @@
 
 int main(void)
 {
-	net::TCPserver *server1;
-	net::TCPserver *server2;
+	// Server object pointer.
+	net::TCPserver *server;
 
+	// Callback to an http proxy server code
 	callbacks::ServerCode *cb = new callbacks::ServerCode(serverDB::HTTPproxyServer);
 
 	try {
-		server1 = new net::TCPserver(AF_INET, 0, 0, 9090);
-		server2 = new net::TCPserver(AF_INET, 0, 0, 8080);
-		server2->serverCallbacks = cb;
+		// Allocation and instantiation of the server object
+		server = new net::TCPserver(AF_INET, 0, 0, 8080);
+
+		// Callback of server object is now pointing to the http proxy server function
+		server->serverCallbacks = cb;
+
 	} catch (net::SocketException& e) {
 		e.display();
 		return 1;
 	}
 
 	try{
-		server1->startServer(1);
-		if(server2->startServer(15) == -1) {
+		// returns 0 on success.
+		if(server->startServer(15) == -1) {
             std::cout << "[+] TCPserver failed to start...\n";
-            return -1;
+            return 1;
 		}
+
+		// Pauses execution until SIGINT is sent from the keyboard.
 		net::wait();
+
 		return 0;
 	} catch(net::SocketException& e) {
 		e.display();
