@@ -31,7 +31,12 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 			server->signalHandler(SIGKILL);
 		}
 
-		if(peer->isValid()) {
+		if(!peer->isValid()) {
+            std::cout << "[*] Failed to accept connection...\n";
+            //acceptLock.lock();
+            continue;
+		}
+        else {
             /* peer object */
             peer->serverCallbacks = server->serverCallbacks;
 
@@ -50,11 +55,6 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 
             delete peer;
             //acceptLock.lock();
-		}
-		else {
-            std::cout << "[*] Failed to accept connection...\n";
-            //acceptLock.lock();
-            continue;
 		}
 	}
 }

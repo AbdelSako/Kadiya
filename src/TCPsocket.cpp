@@ -1,7 +1,7 @@
 #include "TCPsocket.hpp"
 #include "SocketException.hpp"
 
-/* Definition of method */
+/* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)
 throw (net::SocketException)
 {
@@ -21,7 +21,7 @@ throw (net::SocketException)
 }
 
 
-/* Definition of BIND */
+/* Definition of net::TCPsocket::bind */
 int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 throw (net::SocketException)
 {
@@ -97,7 +97,7 @@ throw (net::SocketException)
     return pollfds[0].revents;
 }
 
-/* Blocking */
+/* Definition of net::TCPsocket::setNonBlocking */
 void net::TCPsocket::setNonBlocking(bool non_block) throw (net::SocketException)
 {
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
@@ -119,7 +119,7 @@ void net::TCPsocket::setNonBlocking(bool non_block) throw (net::SocketException)
 	return;
 }
 
-/* READ BUFFER FROM CONNECTED HOST */
+/* Definition of net::TCPsocket::read */
 int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 throw (net::SocketException)
 {
@@ -163,7 +163,7 @@ throw (net::SocketException)
 
 	return totalByteRecv;
 }
-
+/* Defition of net::TCPsocket::operator>> */
 const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
 {
 	uint16_t byteRecv;
@@ -377,15 +377,10 @@ int net::TCPsocket::close(void)
 			return -1;
 }
 
-int net::TCPsocket::getPeerInfo(struct net::PeerInfo& peerInfo)
+struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
 {
-    if(!this->peerInfo.addr.empty() && this->peerInfo.port != 0 && this->peerInfo.af != 0) {
-        peerInfo = this->peerInfo;
-        return 0;
-    }
-    else
-        return -1;
-};
+    return peerInfo;
+}
 
 /* keep alive */
 int net::TCPsocket::setKeepAlive(bool keep_alive) throw (net::SocketException)

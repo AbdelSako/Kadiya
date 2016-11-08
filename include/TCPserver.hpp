@@ -19,9 +19,8 @@ namespace net
 			friend void net::wait(void);
 
             // Initializes the socket and binds it.
-			TCPserver(const int Family, const int Protocol,
-				const char *serverAddr, uint16_t serverPort)
-				: net::TCPsocket(Family, Protocol)
+			TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
+				: net::TCPsocket(Family)
             {
                 ++serverInstances;
                 try{
