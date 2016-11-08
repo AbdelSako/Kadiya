@@ -19,9 +19,9 @@ OBJPATH = $(BUILD)/TCPsocket.o \
 ####################################################################################
 OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers TCPserverThreadCore httpProxy
 ####################################################################################
-mainProxy: $(OBJECTS)
+mainHttpProxy: $(OBJECTS)
 	$(MAKE) $(OBJECTS)
-	$(CC) -g -std=c++17 -I$(INC) ./mainProxy.cpp $(OBJPATH) -lpthread -o $(BIN)/mainProxy
+	$(CC) -g -std=c++17 -I$(INC) ./mainHttpProxy.cpp $(OBJPATH) -lpthread -o $(BIN)/mainHttpProxy
 ####################################################################################
 TCPsocket: $(SRC)/TCPsocket.cpp $(INC)/TCPsocket.hpp
 	$(CC) -g -c -I$(INC) $(SRC)/TCPsocket.cpp -o $(BUILD)/TCPsocket.o
