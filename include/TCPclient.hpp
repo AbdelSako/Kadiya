@@ -36,8 +36,6 @@ namespace net
 
 			int connect(const std::string remoteAddr, uint16_t port);
 
-		private:
-			int m_Type;
 	};
 };
 #endif
