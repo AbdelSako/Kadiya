@@ -4,8 +4,8 @@
 	{
 	    try {
             localPeer.flags(net::SET_WILL_CLOSE_SOCKET, 1);
-            struct net::PeerInfo peerInfo;
-            (void)localPeer.getPeerInfo(peerInfo);
+            struct net::PeerInfo peerInfo = localPeer.getPeerInfo();
+            net::TCPpeer *remotePeer;
             //localPeer.flags(net::SET_TRANS_BUFFER, 1024*50);
 
             std::string rawReq, rawRes, tempBuf, rcByte;
@@ -63,7 +63,7 @@
                 std::cout << "[+] " << peerInfo.addr << ":" << peerInfo.port
                             << " ---> " << host << ":" << port << '\n';
 
-                net::TCPpeer remotePeer(remoteSock);
+                remotePeer = new net::TCPpeer(remoteSock, client.getPeerInfo());
 
                 auto _connection = reqinfo->headers.find("Connection");
                 if(_connection != reqinfo->headers.end()) {
@@ -95,9 +95,9 @@
 
                     if(rawReq.empty()) break;
 
-                    remotePeer << rawReq;
-                    remotePeer >> rawRes;
-                    //http::recvUntilRC(remotePeer, rawRes);
+                    *remotePeer << rawReq;
+                    *remotePeer >> rawRes;
+                    //http::recvUntilRC(*remotePeer, rawRes);
 
                     if(rawRes.empty()) break;
 
@@ -143,7 +143,8 @@
                 }
 
                 /* Connect to target host */
-                if((remoteSock = client.connect(host, port)) == -1) {
+                remoteSock = client.connect(host, port);
+                if(remoteSock == -1) {
                     std::cout << "[*] failed to connect to: " << host
                         << ":" << port << '\n';
                     return;
@@ -151,8 +152,7 @@
                 std::cout << "[+] " << peerInfo.addr << ":" << peerInfo.port
                            << " ---> " << host << ":" << port << '\n';
 
-                net::TCPpeer *remotePeer;
-                remotePeer = new net::TCPpeer(remoteSock);
+                remotePeer = new net::TCPpeer(remoteSock, client.getPeerInfo());
 
                 //remotePeer->flags(net::SET_TRANS_BUFFER, 1024*50);
 
@@ -187,13 +187,14 @@
 
                                 if(!uinfo.host.empty() && uinfo.host.compare(host) != 0) {
                                     host = uinfo.host;
-                                    if((remoteSock = client.connect(host, port)) == -1) {
+                                    remoteSock = client.connect(host, port);
+                                    if(remoteSock == -1) {
                                         std::cout << "[*] Failed to connect to: " << host
                                             << ":" << port << '\n';
                                         return;
                                     }
                                     delete remotePeer;
-                                    remotePeer = new net::TCPpeer(remoteSock);
+                                    remotePeer = new net::TCPpeer(remoteSock, client.getPeerInfo());
 
                                     //remotePeer->flags(net::SET_TRANS_BUFFER, 1024*50);
 

@@ -12,9 +12,6 @@ namespace net
 
 			int connect(const std::string remoteAddr, uint16_t port);
 
-			int getPeerInfo(struct net::PeerInfo& peerInfo) {
-                return net::TCPsocket::getPeerInfo(peerInfo);
-			}
 		private:
 			int m_Type;
 	};

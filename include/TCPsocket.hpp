@@ -34,14 +34,9 @@ namespace net
 	{
 		public:
 			/* Initializes the object with default flags */
-			TCPsocket(int Family, int Protocol):
-				addrFamily(Family),
-				sockProtocol(Protocol),
-				m_sockfd(-1)
+			TCPsocket(int Family):
+				addrFamily(Family)
             {
-                for(int n; n < 20; n++)
-                    m_flags[n] = 0;
-
                 this->m_flags[SET_WILL_CLOSE_SOCKET] = 1;
                 this->m_flags[SET_KEEP_ALIVE] = 0;
                 this->m_flags[SET_TRANS_BUFFER] = 1000*30;
@@ -50,10 +45,10 @@ namespace net
             }
 
 			/* copies a connected tcp socket */
-			TCPsocket(int peerSock): m_sockfd(peerSock)
+			TCPsocket(SOCKET peerSock, struct net::PeerInfo peerInfo): m_sockfd(peerSock)
 			{
-                for(int n; n < 20; n++)
-                    m_flags[n] = 0;
+			    this->peerInfo = peerInfo;
+			    this->addrFamily = this->peerInfo.af;
 
                 this->m_flags[SET_WILL_CLOSE_SOCKET] = 1;
                 this->m_flags[SET_KEEP_ALIVE] = 0;
@@ -110,6 +105,8 @@ namespace net
 			/* Sets flag value */
             int flags(net::flags what, int value);
 
+            struct net::PeerInfo getPeerInfo(void);
+
             /* Shuts down the socket's read, write or both functions.
             *  Arguments:
                 (how)
@@ -123,8 +120,6 @@ namespace net
 
 			/* Close this socket fd */
 			int close(void);
-        protected:
-            virtual int getPeerInfo(struct net::PeerInfo& PeerInfo);
 
         private:
 			/* enable KEEP-ALIVE */
@@ -139,7 +134,7 @@ namespace net
 			// Class variables
 			int addrFamily;
 			uint8_t sockProtocol;
-			net::SOCKET m_sockfd;
+			SOCKET m_sockfd = -1;
 
 			struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
 
@@ -168,14 +163,8 @@ namespace net
 	/* net::TCPpeer takes a connected socket as an argument */
 	class TCPpeer: public TCPsocket {
 		public:
-			TCPpeer(net::SOCKET peerSockfd) : TCPsocket(peerSockfd) {}
-			TCPpeer(net::SOCKET peerSockfd, struct net::PeerInfo peerInfo) : TCPsocket(peerSockfd) {
-                this->peerInfo = peerInfo;
-            }
-
-            int getPeerInfo(struct net::PeerInfo& peerInfo) {
-                return net::TCPsocket::getPeerInfo(peerInfo);
-            }
+			//TCPpeer(net::SOCKET peerSockfd) : TCPsocket(peerSockfd) {}
+			TCPpeer(net::SOCKET peerSockfd, struct net::PeerInfo peerInfo) : TCPsocket(peerSockfd, peerInfo) {}
 
 		private:
 		    /* Making them inaccessible. */
