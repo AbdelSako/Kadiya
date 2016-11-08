@@ -30,7 +30,7 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
      std::memset(&m_hints, 0, sizeof m_hints);
      //std::memset(m_remoteAddrInfo, 0, sizeof m_remoteAddrInfo);
      m_hints.ai_family = AF_UNSPEC;
-     m_hints.ai_socktype = m_Type;
+     m_hints.ai_socktype = SOCK_STREAM;
 
      int gai_ret;
      if((gai_ret = ::getaddrinfo(remoteAddr.data(), std::to_string(port).data(),
