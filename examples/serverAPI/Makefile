@@ -8,7 +8,7 @@ THR = $(SRC)/threadCore
 DB_SRC = $(SRC)/serverDB
 CC =  g++
 
-MAIN_PROXY = mainProxy.cpp
+BIN = ../../bin
 
 BUILD = ../../build
 
@@ -21,7 +21,7 @@ OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers TCPserverThreadCore httpProx
 ####################################################################################
 mainProxy: $(OBJECTS)
 	$(MAKE) $(OBJECTS)
-	$(CC) -g -std=c++17 -I$(INC) $(MAIN_PROXY) $(OBJPATH) -lpthread -o mainProxy
+	$(CC) -g -std=c++17 -I$(INC) ./mainProxy.cpp $(OBJPATH) -lpthread -o $(BIN)/mainProxy
 ####################################################################################
 TCPsocket: $(SRC)/TCPsocket.cpp $(INC)/TCPsocket.hpp
 	$(CC) -g -c -I$(INC) $(SRC)/TCPsocket.cpp -o $(BUILD)/TCPsocket.o
