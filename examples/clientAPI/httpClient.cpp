@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	// Creates a client object
 	net::TCPclient client;
 
-	// Connects to google and check if a valid socket is returned
+	// Connect to host and check if a valid socket is returned
 	if(client.connect(host, port) == -1) {
 		std:: cout << "[*] failed to connect...\n";
 		return 1;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	std::string res;
 
 	// Request variable
-	std::string req = "GET http://10.0.0.1/ HTTP/1.1\r\n"
+	std::string req = "GET http://"+host+"/ HTTP/1.1\r\n"
 							"User-Agent: SocketAPI\r\n\r\n";
 
 	// Send request
