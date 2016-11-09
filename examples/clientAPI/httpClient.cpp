@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	// Send request
 	client << req;
 
-	// Receive request
+	// Receive response
 	client >> res;
 
 	// Parse the http response into a struct (http::responseParser)
