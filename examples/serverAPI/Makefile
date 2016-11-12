@@ -12,16 +12,20 @@ BIN = ../../bin
 
 BUILD = ../../build
 
-OBJPATH = $(BUILD)/TCPsocket.o \
+####################################################################################
+HTTP_PROXY_OBJPATH = $(BUILD)/TCPsocket.o \
    $(BUILD)/TCPserver.o $(BUILD)/TCPserverThreadCore.o $(BUILD)/TCPclient.o \
    $(BUILD)/httpProxy.o $(BUILD)/HTTPhandlers.o 
 
+HTTP_PROXY_OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers TCPserverThreadCore httpProxy
+
+mainHttpProxy: $(HTTP_PROXY_OBJECTS)
+	$(MAKE) $(HTTP_PROXY_OBJECTS)
+	$(CC) -g -std=c++17 -I$(INC) ./mainHttpProxy.cpp\
+ $(HTTP_PROXY_OBJPATH) -lpthread -o $(BIN)/mainHttpProxy
 ####################################################################################
-OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers TCPserverThreadCore httpProxy
-####################################################################################
-mainHttpProxy: $(OBJECTS)
-	$(MAKE) $(OBJECTS)
-	$(CC) -g -std=c++17 -I$(INC) ./mainHttpProxy.cpp $(OBJPATH) -lpthread -o $(BIN)/mainHttpProxy
+
+
 ####################################################################################
 TCPsocket: $(SRC)/TCPsocket.cpp $(INC)/TCPsocket.hpp
 	$(CC) -g -c -I$(INC) $(SRC)/TCPsocket.cpp -o $(BUILD)/TCPsocket.o
