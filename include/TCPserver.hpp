@@ -86,7 +86,7 @@ namespace net
 			static uint16_t serverInstances;
 
 			/* server control variables */
-			static std::condition_variable_any m_intSigCond;
+			static std::condition_variable m_intSigCond;
 			static bool m_shutdownTCPservers;
 			bool m_serverStarted;
 	};
