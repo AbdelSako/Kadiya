@@ -35,7 +35,6 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 
 	net::TCPserver *server = _server.get();
 
-	//std::shared_lock<std::shared_mutex> acceptLock(server->getMutex());
 	net::TCPpeer *peer;
 
 	while(true) {
@@ -46,7 +45,6 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 			peer = server->accept();
 			/* */
             peer->flags(SET_WILL_CLOSE_SOCKET, 0);
-            //acceptLock.unlock();
 		} catch(net::SocketException& e) {
 			e.display();
 			continue;
@@ -56,9 +54,8 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		}
 
 		if(!peer->isValid()) {
-            std::cout << "[*] Failed to accept connection...\n";
-            //acceptLock.lock();
-            continue;
+            		std::cout << "[*] Failed to accept connection...\n";
+            		continue;
 		}
         else {
             /* peer object */
