@@ -31,7 +31,7 @@ TCPsocket: $(SRC)/TCPsocket.cpp $(INC)/TCPsocket.hpp
 	$(CC) -g -c -I$(INC) $(SRC)/TCPsocket.cpp -o $(BUILD)/TCPsocket.o
 
 TCPserver: $(SRC)/TCPserver.cpp $(INC)/TCPserver.hpp
-	$(CC) -g -std=c++17 -c -I$(INC) $(SRC)/TCPserver.cpp -o $(BUILD)/TCPserver.o
+	$(CC) -g -c -I$(INC) $(SRC)/TCPserver.cpp -o $(BUILD)/TCPserver.o
 
 TCPclient: $(SRC)/TCPclient.cpp $(INC)/TCPclient.hpp
 	$(CC) -g -c -I$(INC) $(SRC)/TCPclient.cpp -o $(BUILD)/TCPclient.o
@@ -40,7 +40,7 @@ HTTPHandlers: $(HDLINCLUDE)/HTTPhandlers.cpp $(INC)/handlers/HTTPhandlers.hpp
 	$(CC) -g -c -I$(INC) $(HDLINCLUDE)/HTTPhandlers.cpp -o $(BUILD)/HTTPhandlers.o
 
 TCPserverThreadCore: $(THR)/TCPserverThreadCore.cpp
-	$(CC) -g -std=c++17 -c -I$(INC) $(THR)/TCPserverThreadCore.cpp \
+	$(CC) -g -c -I$(INC) $(THR)/TCPserverThreadCore.cpp \
 	 -o $(BUILD)/TCPserverThreadCore.o
 
 httpProxy: $(DB_SRC)/httpProxy.cpp $(SDBINCLUDE)/httpProxy.hpp
