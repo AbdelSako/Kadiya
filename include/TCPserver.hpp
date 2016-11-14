@@ -78,18 +78,12 @@ namespace net
 			/* checks is server has to shutdown */
 			bool hasToShutdown(void);
 
-			/* get mutex */
-			std::shared_mutex& getMutex(void);
-
 			/* Signal handler */
 			static void signalHandler(int signalNum);
 
 		private:
 		    /* Object's count */
 			static uint16_t serverInstances;
-
-			/* mutex */
-			mutable std::shared_mutex m_sharedMutex;
 
 			/* server control variables */
 			static std::condition_variable_any m_intSigCond;
