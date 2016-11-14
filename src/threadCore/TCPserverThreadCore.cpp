@@ -75,7 +75,6 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
             }
 
             delete peer;
-            //acceptLock.lock();
 		}
 	}
 }
