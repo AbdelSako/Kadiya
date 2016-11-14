@@ -148,12 +148,6 @@ bool net::TCPserver::hasToShutdown(void)
 	return m_shutdownTCPservers;
 }
 
-std::shared_mutex& net::TCPserver::getMutex(void)
-{
-	return m_sharedMutex;
-}
-
-
 void net::TCPserver::signalHandler(int signalNum)
 {
 	if(signalNum == SIGPIPE) {
