@@ -27,7 +27,7 @@ SOFTWARE.
 
 /*  */
 uint16_t net::TCPserver::serverInstances = 0;
-std::condition_variable_any net::TCPserver::m_intSigCond;
+std::condition_variable net::TCPserver::m_intSigCond;
 bool net::TCPserver::m_shutdownTCPservers = false;
 
 /* LISTEN FOR INCOMING CONNECTION */
@@ -148,12 +148,6 @@ bool net::TCPserver::hasToShutdown(void)
 	return m_shutdownTCPservers;
 }
 
-std::shared_mutex& net::TCPserver::getMutex(void)
-{
-	return m_sharedMutex;
-}
-
-
 void net::TCPserver::signalHandler(int signalNum)
 {
 	if(signalNum == SIGPIPE) {
@@ -177,8 +171,8 @@ void net::TCPserver::signalHandler(int signalNum)
 
 void net::wait(void)
 {
-	std::shared_mutex m ;
-	std::shared_lock<std::shared_mutex> lock(m);
+	std::mutex m ;
+	std::unique_lock<std::mutex> lock(m);
 	TCPserver::m_intSigCond.wait(lock, []{return TCPserver::m_shutdownTCPservers;});
 }
 
