@@ -21,7 +21,7 @@ HTTP_PROXY_OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers httpProxy
 
 mainHttpProxy: $(HTTP_PROXY_OBJECTS)
 	$(MAKE) $(HTTP_PROXY_OBJECTS)
-	$(CC) -g -std=c++17 -I$(INC) ./mainHttpProxy.cpp\
+	$(CC) -g -I$(INC) ./mainHttpProxy.cpp\
  $(HTTP_PROXY_OBJPATH) -lpthread -o $(BIN)/mainHttpProxy
 ####################################################################################
 
