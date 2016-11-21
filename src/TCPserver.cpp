@@ -169,47 +169,74 @@ void net::TCPserver::signalHandler(int signalNum)
 	}
 }
 
+void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
+{
+	static int threadCount = 0;
+	net::SOCKET remoteSock;
+	std::string callbacksID;
+	std::thread* thr;
+
+	threadCount += 1;
+
+	net::TCPserver *server = _server.get();
+
+	net::TCPpeer *peer;
+
+	while(true) {
+		if(server->hasToShutdown()) return;
+
+		try {;
+			/* Accept incoming */
+			peer = server->accept();
+			/* */
+            peer->flags(SET_WILL_CLOSE_SOCKET, 0);
+		} catch(net::SocketException& e) {
+			e.display();
+			continue;
+		} catch(...) {
+			std::cout << "\n[*] This behavior needs to be investigated. \n\n[*] High Priority!\n";
+			server->signalHandler(SIGKILL);
+		}
+
+		if(!peer->isValid()) {
+            		std::cout << "[*] Failed to accept connection...\n";
+            		continue;
+		}
+        else {
+            /* peer object */
+            peer->serverCallbacks = server->serverCallbacks;
+
+            if(dynamic_cast<callbacks::ServerCode*>(peer->serverCallbacks)) {
+                callbacks::ServerCode* callback =
+                        dynamic_cast<callbacks::ServerCode*>(peer->serverCallbacks);
+                thr = new std::thread(callback->HandleAndServe, *peer);
+                thr->detach();
+            }
+            else {
+                handleConn(*peer);
+
+                peer->shutdown(0);
+                peer->close();
+            }
+
+            delete peer;
+		}
+	}
+}
+
+void net::handleConn(net::TCPpeer &peer)
+{
+    std::string req;
+
+    peer >> req;
+    std::cout << "From: " << req << '\n';
+
+    peer << "Response from default handler...\r\n\r\n";
+}
+
 void net::wait(void)
 {
 	std::mutex m ;
 	std::unique_lock<std::mutex> lock(m);
 	TCPserver::m_intSigCond.wait(lock, []{return TCPserver::m_shutdownTCPservers;});
 }
-
-//void net::startServer(net::TCPserver &server)
-//{
-//	/* signal handler */
-//	std::signal(SIGINT, server.signalHandler);
-//	std::signal(SIGPIPE, server.signalHandler);
-//
-//	/* Listen */
-//	server.listen(server.m_backlog);
-//
-//	// n# of servers running
-//	static uint16_t serverInstance = 0;
-//
-//	uint16_t maxThread = server.m_threads;
-//	std::deque<std::thread> acceptThreads;
-//	std::cout << "[+] TCPserver starting with "<< maxThread << " threads\n";
-//
-//	std::thread *threads;
-//
-//	for( ; maxThread > 0; maxThread--) {
-//        threads = new std::thread(net::TCPserverThreadCore, &server);
-//        threads->detach();
-//	}
-//
-//	/* Store threads in a vector */
-////	for( ; maxThread > 0; maxThread--)
-////		acceptThreads.push_back(std::thread(net::TCPserverThreadCore, ptr));
-//
-//	/* Detach threads */
-////	for(std::thread &acceptWorker : acceptThreads)
-////		acceptWorker.detach();
-//
-//	/* Increase the instance */
-//	std::cout << "[+] TCPserver " << ++serverInstance << " Started\n";
-//	server.m_serverStarted = true;
-//
-//	return;
-//}
