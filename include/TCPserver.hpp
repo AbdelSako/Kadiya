@@ -22,6 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#if !defined(__net_TCPserver)
+#define __net_TCPserver
+
 #include "TCPsocket.hpp"
 #include "handlers/HTTPhandlers.hpp"
 #include <shared_mutex>
@@ -29,9 +32,6 @@ SOFTWARE.
 #include <deque>
 #include <thread>
 #include <chrono>
-
-#if !defined(__net_TCPserver)
-#define __net_TCPserver
 
 namespace net
 {
