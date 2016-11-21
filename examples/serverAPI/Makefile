@@ -14,10 +14,10 @@ BUILD = ../../build
 
 ####################################################################################
 HTTP_PROXY_OBJPATH = $(BUILD)/TCPsocket.o \
-   $(BUILD)/TCPserver.o $(BUILD)/TCPserverThreadCore.o $(BUILD)/TCPclient.o \
+   $(BUILD)/TCPserver.o $(BUILD)/TCPclient.o \
    $(BUILD)/httpProxy.o $(BUILD)/HTTPhandlers.o 
 
-HTTP_PROXY_OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers TCPserverThreadCore httpProxy
+HTTP_PROXY_OBJECTS: TCPsocket TCPserver TCPclient HTTPHandlers httpProxy
 
 mainHttpProxy: $(HTTP_PROXY_OBJECTS)
 	$(MAKE) $(HTTP_PROXY_OBJECTS)
@@ -38,10 +38,6 @@ TCPclient: $(SRC)/TCPclient.cpp $(INC)/TCPclient.hpp
 
 HTTPHandlers: $(HDLINCLUDE)/HTTPhandlers.cpp $(INC)/handlers/HTTPhandlers.hpp
 	$(CC) -g -c -I$(INC) $(HDLINCLUDE)/HTTPhandlers.cpp -o $(BUILD)/HTTPhandlers.o
-
-TCPserverThreadCore: $(THR)/TCPserverThreadCore.cpp
-	$(CC) -g -c -I$(INC) $(THR)/TCPserverThreadCore.cpp \
-	 -o $(BUILD)/TCPserverThreadCore.o
 
 httpProxy: $(DB_SRC)/httpProxy.cpp $(SDBINCLUDE)/httpProxy.hpp
 	$(CC) -g -c -I$(INC) $(DB_SRC)/httpProxy.cpp -o $(BUILD)/httpProxy.o
