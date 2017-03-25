@@ -24,7 +24,8 @@ SOFTWARE.
 
 #include "TCPclient.hpp"
 
-/* CONNECT TO REMOTE HOST */
+/* CONNECT TO REMOTE HOST.
+the string "remoteAddr" could be a domain name or IPv4/IPv6 address */
 int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
 {
      std::memset(&m_hints, 0, sizeof m_hints);
@@ -32,6 +33,10 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
      m_hints.ai_family = AF_UNSPEC;
      m_hints.ai_socktype = SOCK_STREAM;
 
+     /* Get the remoteAddr address info.
+     If "remoteAddr" is a domain name, then the struct "m_remoteAddrInfo" will be
+     populated by all IP addresses(v4 & v6) that point to that domain name.
+     Otherwise, the struct will contain only the IPv4/IPv6 address you passed as argument. */
      int gai_ret;
      if((gai_ret = ::getaddrinfo(remoteAddr.data(), std::to_string(port).data(),
                &m_hints, &m_remoteAddrInfo)) != 0) {
@@ -44,6 +49,8 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
      struct pollfd pollfds[1];
      std::memset((char *) &pollfds, 0, sizeof(pollfds));
 
+     /* If remoteAddr is a domain name, the loop will break after connection has been
+     established. */
      for(m_remoteAddrPtr = m_remoteAddrInfo; m_remoteAddrPtr != NULL;
                m_remoteAddrPtr = m_remoteAddrPtr->ai_next) {
           m_sockfd = -1;
@@ -65,11 +72,14 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
           break;
      }
 
+     /* if "m_remoteAddrPtr" is equivalent to NULL, that implies that something went wrong */
      if(m_remoteAddrPtr == NULL){
           errno = ESOCKTNOSUPPORT;
           return m_sockfd;
      }
 
+     /* The following lines, extract info of the remote address and store them in human readable in
+     a member struct called "peerInfo". */
      char ipstr[addrFamily == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
      void *addr;
      switch ((int)m_remoteAddrPtr->ai_family) {
@@ -90,6 +100,10 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
      this->peerInfo.port = port;
      this->peerInfo.af = m_remoteAddrPtr->ai_family;
 
+     /* well, this line is obvious. */
      freeaddrinfo(m_remoteAddrInfo);
+     
+     /* TODO: CREATE TWO METHODS, "isValid()" and "getSocket()", and then this mothod could be turned into
+     a void method. */
      return m_sockfd;
 }
