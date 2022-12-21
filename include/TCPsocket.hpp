@@ -93,26 +93,28 @@ namespace net
 
 		protected:
 			/* Initializes the socket fd */
-			virtual int socket(void);
+			virtual int socket(void) throw (net::SocketException);
 
 			/* binds to host:port
 			 * int 0 to bind to any address*/
-			virtual int bind(const char *bindAddr, uint16_t port) ;
+			virtual int bind(const char *bindAddr, uint16_t port) throw (net::SocketException);
 
 		private:
 		    /* */
-			short poll(int events, int timeout);
+			short poll(int events, int timeout) throw (net::SocketException);
 
 			/* Blocking*/
-			void setNonBlocking(bool non_block) ;
+			void setNonBlocking(bool non_block) throw (net::SocketException);
 
 			/* This function is a callee of operator>>.
 			** Reads data from a connected host.*/
-			int read(char *inBuffer, uint16_t inBufSize, int timeout);
+			int read(char *inBuffer, uint16_t inBufSize, int timeout)
+				throw (net::SocketException);
 
 			/* This function is a callee of operator<<.
 			** Writes data to a connected host.*/
-			int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
+			int write(const std::string outBuffer, uint16_t outBufSize, int timeout)
+				throw (net::SocketException);
 
 		public:
 			// Reads from a connected host
@@ -145,7 +147,7 @@ namespace net
 
         private:
 			/* enable KEEP-ALIVE */
-			int setKeepAlive(bool keep_alive) ;
+			int setKeepAlive(bool keep_alive) throw (net::SocketException);
 
         public:
 			/* checks whether the socket is valid or not */
@@ -190,8 +192,8 @@ namespace net
 
 		private:
 		    /* Making them inaccessible. */
-			int socket(void) {}
-			int bind(const char *bindAddr, uint16_t port) {}
+			int socket(void) throw (net::SocketException) {}
+			int bind(const char *bindAddr, uint16_t port) throw (net::SocketException) {}
 	};
 
 };

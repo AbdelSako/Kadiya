@@ -31,7 +31,7 @@ std::condition_variable net::TCPserver::m_intSigCond;
 bool net::TCPserver::m_shutdownTCPservers = false;
 
 /* LISTEN FOR INCOMING CONNECTION */
-int net::TCPserver::listen(uint16_t maxHost)  
+int net::TCPserver::listen(uint16_t maxHost) const throw (net::SocketException)
 {
      if(!isValid()) {
           errno = EBADF;
@@ -45,7 +45,8 @@ int net::TCPserver::listen(uint16_t maxHost)
 }
 
 /* ACCEPT INCOMING CONNECTION */
-net::TCPpeer* net::TCPserver::accept(void)
+net::TCPpeer* net::TCPserver::accept(void) const
+throw (net::SocketException)
 {
      if(!isValid()) {
           errno = EBADF;
