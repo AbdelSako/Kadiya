@@ -27,6 +27,7 @@ SOFTWARE.
 
 /* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)
+throw (net::SocketException)
 {
 	m_sockfd = ::socket(addrFamily, ::SOCK_STREAM, 0);
 	if(!isValid())
@@ -46,7 +47,7 @@ int net::TCPsocket::socket(void)
 
 /* Definition of net::TCPsocket::bind */
 int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
-
+throw (net::SocketException)
 {
 	if(!isValid()) return -1;
 	int bind_ret, pton_ret;
@@ -104,7 +105,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 }
 
 short net::TCPsocket::poll(int events, int timeout)
-
+throw (net::SocketException)
 {
 	if(!isValid()) throw net::SocketException("net::TCPsocket::poll()", EBADF);
 
@@ -121,7 +122,7 @@ short net::TCPsocket::poll(int events, int timeout)
 }
 
 /* Definition of net::TCPsocket::setNonBlocking */
-void net::TCPsocket::setNonBlocking(bool non_block)
+void net::TCPsocket::setNonBlocking(bool non_block) throw (net::SocketException)
 {
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
 	if(flags == -1)
@@ -144,6 +145,7 @@ void net::TCPsocket::setNonBlocking(bool non_block)
 
 /* Definition of net::TCPsocket::read */
 int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
+throw (net::SocketException)
 {
 	if(!isValid()) throw net::SocketException("net::TCPsocket::read()", EBADF);
 
@@ -219,7 +221,7 @@ const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
 
 /* SEND BUFFER TO CONNECTED HOST */
 int net::TCPsocket::write(const std::string outBuffer, uint16_t outBufSize, int timeout)
-
+throw (net::SocketException)
 {
 	if(!isValid()) throw net::SocketException("net::TCPsocket::write()", EBADF);
 
@@ -405,7 +407,7 @@ struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
 }
 
 /* keep alive */
-int net::TCPsocket::setKeepAlive(bool keep_alive)
+int net::TCPsocket::setKeepAlive(bool keep_alive) throw (net::SocketException)
 {
 	int optval;
 
