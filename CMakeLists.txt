@@ -1,0 +1,20 @@
+# CMakeList.txt : CMake project for CMakeProject1, include source and define
+# project specific logic here.
+#
+#add_library (httpProxy "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "serverDB/httpProxy.cpp")
+#target_include_directories (httpProxy PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+# Add source to this project's executable.
+#add_executable (mainProxy "${CMAKE_CURRENT_SOURCE_DIR}/examples/serverAPI/mainHttpProxy")
+#target_link_libraries (mainProxy LINK_PUBLIC httpProxy)
+include_directories ("include")
+#add_library(httpProxy "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp" )
+#target_link_libraries (httpProxy)
+add_executable (mainHttpProxy  "examples/serverAPI/mainHttpProxy.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp")
+
+
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET mainHttpProxy PROPERTY CXX_STANDARD 20)
+endif()
+
+# TODO: Add tests and install targets if needed.
