@@ -40,7 +40,7 @@ namespace net
 		public:
 			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 			** only when it value changes to "true" */
-			friend void net::wait(void);
+			friend void wait(void);
 
             // Initializes the socket and binds it.
 			TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
@@ -56,10 +56,10 @@ namespace net
             }
 
 			/* listen */
-			int listen(uint16_t maxHost) const throw (net::SocketException);
+			int listen(uint16_t maxHost);
 
-			/* accept */
-			net::TCPpeer*  accept(void) const throw (net::SocketException);
+				/* accept */
+				net::TCPpeer* accept(void);
 
 			~TCPserver(void) { --serverInstances;}
 

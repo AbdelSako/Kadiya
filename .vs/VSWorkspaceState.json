@@ -1,0 +1,13 @@
+{
+  "DevContainersInfoBarHidden": true,
+  "ActiveTargetSystem": "WSL: Debian",
+  "ExpandedNodes": [
+    "",
+    "\\examples",
+    "\\examples\\serverAPI",
+    "\\include",
+    "\\src"
+  ],
+  "SelectedNode": "\\mainHttpProxy.cpp",
+  "PreviewInSolutionExplorer": false
+}
