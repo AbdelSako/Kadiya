@@ -37,6 +37,15 @@ namespace net
 {
 	/* net::TCPserver Class */
 	class TCPserver: public net::TCPsocket {
+		private:
+			/* Object's count */
+			static uint16_t serverInstances;
+
+			/* server control variables */
+			static std::condition_variable m_intSigCond;
+			static bool m_shutdownTCPservers;
+			bool m_serverStarted;
+
 		public:
 			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 			** only when it value changes to "true" */
@@ -83,15 +92,6 @@ namespace net
 
 			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
 			void (*serverCode)(TCPpeer) = nullptr;
-
-		private:
-		    /* Object's count */
-			static uint16_t serverInstances;
-
-			/* server control variables */
-			static std::condition_variable m_intSigCond;
-			static bool m_shutdownTCPservers;
-			bool m_serverStarted;
 	};
 
 	/* */
@@ -106,6 +106,5 @@ namespace net
 	** net::wait() Pauses the application, allowing the detached threads to run until a
 	** SIGINT(ctrl-c) is sent to the program.*/
 	void wait(void);
-
 };
 #endif

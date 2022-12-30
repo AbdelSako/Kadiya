@@ -51,6 +51,29 @@ namespace net
 
 	class TCPsocket
 	{
+		protected:
+			// Class variables
+			int addrFamily;
+			uint8_t sockProtocol;
+			SOCKET m_sockfd = -1;
+
+			struct addrinfo m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
+
+			struct sockaddr_in m_localSockAddr;
+			struct sockaddr_in6 m_localSockAddr6;
+
+			// Store connected peer's info in human readable
+			struct net::PeerInfo peerInfo;
+
+			/* Tells the object when to change its behavior:
+			** Per example, when to change the transmission buffer or
+			** to change the recv/send timeout or to set keep-alive.
+			** You can also get the values that are used by the object
+			** or check if keep-alive is enabled.
+			** Consult "net::TCPsocket::flags" overloaded functions and
+			** "net::flags" enumeration in __TCPsocket.hpp */
+			int m_flags[10];
+
 		public:
 			/* Initializes the object with default flags */
 			TCPsocket(int Family):
@@ -147,28 +170,6 @@ namespace net
 			bool isValid(void) const {
 				return m_sockfd != -1;
 			}
-		protected:
-			// Class variables
-			int addrFamily;
-			uint8_t sockProtocol;
-			SOCKET m_sockfd = -1;
-
-			struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
-
-			struct sockaddr_in m_localSockAddr;
-			struct sockaddr_in6 m_localSockAddr6;
-
-			// Store connected peer's info in human readable
-            struct net::PeerInfo peerInfo;
-
-            /* Tells the object when to change its behavior:
-            ** Per example, when to change the transmission buffer or
-            ** to change the recv/send timeout or to set keep-alive.
-            ** You can also get the values that are used by the object
-            ** or check if keep-alive is enabled.
-            ** Consult "net::TCPsocket::flags" overloaded functions and
-            ** "net::flags" enumeration in __TCPsocket.hpp */
-			int m_flags[10];
 	};
 
 
