@@ -8,16 +8,16 @@ int main(void)
 	net::TCPserver *server;
 
 	// Callback to an http proxy server code
-	callbacks::ServerCode *cb = new callbacks::ServerCode(serverDB::HTTPproxyServer);
+	//callbacks::ServerCode *cb = new callbacks::ServerCode(serverDB::HTTPproxyServer);
 
 	try {
 		/* Allocation and instantiation of the server object.
         ** The first argument is the address family; the second is a char* of the address
         ** to bind to, zero for any address. */
-		server = new net::TCPserver(AF_INET, 0, 8080);
+		server = new net::TCPserver(AF_INET, "127.0.0.1", 8080);
 
 		// Callback of server object is now pointing to the http proxy server function
-		server->serverCallbacks = cb;
+		server->serverCode = serverDB::HTTPproxyServer;
 
 	} catch (net::SocketException& e) {
 		e.display();

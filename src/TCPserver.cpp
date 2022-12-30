@@ -202,16 +202,10 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
             		continue;
 		}
         else {
-            /* peer object */
-            peer->serverCallbacks = server->serverCallbacks;
-
-            if(dynamic_cast<callbacks::ServerCode*>(peer->serverCallbacks)) {
-                callbacks::ServerCode* callback =
-                        dynamic_cast<callbacks::ServerCode*>(peer->serverCallbacks);
-                thr = new std::thread(callback->HandleAndServe, *peer);
+            if (server->serverCode != nullptr) {
+                thr = new std::thread(server->serverCode, *peer);
                 thr->detach();
-            }
-            else {
+            } else {
                 handleConn(*peer);
 
                 peer->shutdown(0);

@@ -81,6 +81,9 @@ namespace net
 			/* Signal handler */
 			static void signalHandler(int signalNum);
 
+			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
+			void (*serverCode)(TCPpeer) = nullptr;
+
 		private:
 		    /* Object's count */
 			static uint16_t serverInstances;
@@ -103,24 +106,6 @@ namespace net
 	** net::wait() Pauses the application, allowing the detached threads to run until a
 	** SIGINT(ctrl-c) is sent to the program.*/
 	void wait(void);
-
-};
-
-namespace callbacks
-{
-	/* polymorphic base */
-   struct Server {
-	   virtual ~Server(void) {}
-   };
-
-   /* A callback to a server code (server codes are located in src/serverDB/* and their headers are
-    ** in include/serverDB/*), it could be your own code */
-   struct ServerCode : Server {
-      ServerCode(void (*connCall)(net::TCPpeer) = nullptr)
-      : HandleAndServe(connCall) {}
-
-      void (*HandleAndServe)(net::TCPpeer);
-   };
 
 };
 #endif

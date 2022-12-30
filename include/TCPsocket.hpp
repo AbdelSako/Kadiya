@@ -45,11 +45,6 @@ SOFTWARE.
 #include "SocketException.hpp"
 #include <iostream>
 
-namespace callbacks
-{
-	struct Server;
-};
-
 namespace net
 {
     typedef int SOCKET;
@@ -174,11 +169,6 @@ namespace net
             ** Consult "net::TCPsocket::flags" overloaded functions and
             ** "net::flags" enumeration in __TCPsocket.hpp */
 			int m_flags[10];
-
-		public:
-		    /* The callback could be a function from src/serverDB/* or your
-		    ** own code. */
-			callbacks::Server *serverCallbacks;
 	};
 
 
