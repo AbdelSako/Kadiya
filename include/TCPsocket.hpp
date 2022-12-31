@@ -24,17 +24,40 @@ SOFTWARE.
 
 #if !defined(__net_TCPsocket)
 #define __net_TCPsocket
-#include <sys/types.h>
+
+#ifdef _WIN32
+
+#undef UNICODE
+#define WIN32_LEAN_AND_MEAN
+#define SHUT_RDWR SD_BOTH
+#define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT //Socket type not supported
+#define poll WSAPoll
+#define ssize_t INT64
+#define ioctl ioctlsocket
+
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <io.h>
+
+#else
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <string>
-#include <cstring>
 #include <arpa/inet.h>
 #include <poll.h>
 #include <sys/ioctl.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#endif
+
+#include <sys/types.h>
+#include <string>
+#include <cstring>
 #include <cerrno>
 #include <exception>
 
@@ -103,8 +126,8 @@ namespace net
 			~TCPsocket(void) {
 				if(isValid()) {
                     if(m_flags[GET_WILL_CLOSE_SOCKET]) {
-                        TCPsocket::shutdown(::SHUT_RDWR);
-                        TCPsocket::close();
+						this->shutdown(SHUT_RDWR);
+                        this->close();
                     }
 				}
 			}

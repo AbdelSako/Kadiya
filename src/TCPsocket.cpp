@@ -28,14 +28,20 @@ SOFTWARE.
 /* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)
 {
-	m_sockfd = ::socket(addrFamily, ::SOCK_STREAM, 0);
+	m_sockfd = ::socket(addrFamily, SOCK_STREAM, 0);
 	if(!isValid())
 		throw net::SocketException("net::TCPsocket::socket()", errno);
 
-	int optval = 1; socklen_t optlen = sizeof optval;
+#ifdef _WIN32
+	const char optval = 1;
+#else
+	int optval = 1;
+#endif
+	socklen_t optlen = sizeof optval;
+
 	if(
 		(this->addrFamily == AF_INET ?
-			::setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, optlen):
+			::setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) :
 			::setsockopt(m_sockfd, IPPROTO_IPV6, SO_REUSEADDR, &optval, optlen)
 		) == -1) {
 		throw SocketException("::setsockopt() in net::TCPsocket::socket()", errno);
@@ -114,7 +120,7 @@ short net::TCPsocket::poll(int events, int timeout)
 	pollfds[0].fd = m_sockfd;
 	pollfds[0].events = events;
 
-	if(::poll(pollfds, 1, timeout) < 0)
+	if (::poll(pollfds, 1, timeout) < 0)
 		throw net::SocketException("net::TCPsocket::poll()", errno);
 
     return pollfds[0].revents;
@@ -123,6 +129,18 @@ short net::TCPsocket::poll(int events, int timeout)
 /* Definition of net::TCPsocket::setNonBlocking */
 void net::TCPsocket::setNonBlocking(bool non_block)
 {
+#ifdef _WIN32
+	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
+	u_long iMode;
+	if (non_block)
+		iMode = 1;
+	else
+		iMode = 0;
+	int iResult = ioctlsocket(m_sockfd, FIONBIO, &iMode);
+	if (iResult != NO_ERROR)
+		throw net::SocketException("SET TCPsocket::fcntl()", iResult);
+
+#else
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
 	if(flags == -1)
 		throw net::SocketException("GET TCPsocket::fcntl()", errno);
@@ -140,6 +158,7 @@ void net::TCPsocket::setNonBlocking(bool non_block)
 		throw net::SocketException("SET TCPsocket::fcntl()", errno);
 
 	return;
+#endif
 }
 
 /* Definition of net::TCPsocket::read */
@@ -158,8 +177,13 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 	do {
         repoll = net::TCPsocket::poll(POLLIN | POLLERR, timeout);
 
+#ifdef _WIN32
+		byteRecv = ::_read(m_sockfd, inBuffer + totalByteRecv,
+			inBufSize - totalByteRecv);
+#else
         byteRecv = ::read(m_sockfd, inBuffer + totalByteRecv,
             inBufSize - totalByteRecv);
+#endif
 
 		switch ((int)byteRecv) {
 
