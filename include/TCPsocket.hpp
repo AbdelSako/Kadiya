@@ -31,9 +31,9 @@ SOFTWARE.
 #define WIN32_LEAN_AND_MEAN
 #define SHUT_RDWR SD_BOTH
 #define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT //Socket type not supported
-#define poll WSAPoll
 #define ssize_t INT64
 #define ioctl ioctlsocket
+#define SIGPIPE EPIPE
 
 #include <windows.h>
 #include <winsock2.h>
@@ -41,6 +41,10 @@ SOFTWARE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <io.h>
+
+// Need to link with Ws2_32.lib
+#pragma comment (lib, "Ws2_32.lib")
+// #pragma comment (lib, "Mswsock.lib")
 
 #else
 
@@ -76,9 +80,13 @@ namespace net
 	{
 		protected:
 			// Class variables
+#ifdef _WIN32
+			WSADATA m_wsaData;
+#endif
 			int addrFamily;
 			uint8_t sockProtocol;
 			SOCKET m_sockfd = -1;
+			int m_sockResult;
 
 			struct addrinfo m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
 
@@ -142,7 +150,7 @@ namespace net
 
 		private:
 		    /* */
-			short poll(int events, int timeout);
+			short poll(short events, int timeout);
 
 			/* Blocking*/
 			void setNonBlocking(bool non_block) ;
@@ -151,11 +159,19 @@ namespace net
 			** Reads data from a connected host.*/
 			int read(char *inBuffer, uint16_t inBufSize, int timeout);
 
+			
+
 			/* This function is a callee of operator<<.
 			** Writes data to a connected host.*/
 			int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
 		public:
+			/* RECEIVE METHOD*/
+			int recv(char* inBuffer, uint16_t inBufSize, int timeout);
+
+			/* send method*/
+			int send(const std::string outBuffer, uint16_t outBufSize, int timeout);
+
 			// Reads from a connected host
 			const TCPsocket& operator>> (std::string &raw_data);
 
@@ -202,10 +218,10 @@ namespace net
 			//TCPpeer(net::SOCKET peerSockfd) : TCPsocket(peerSockfd) {}
 			TCPpeer(net::SOCKET peerSockfd, struct net::PeerInfo peerInfo) : TCPsocket(peerSockfd, peerInfo) {}
 
-		private:
+	//	private:
 		    /* Making them inaccessible. */
-			int socket(void) {}
-			int bind(const char *bindAddr, uint16_t port) {}
+		/*	int socket(void) {}
+			int bind(const char *bindAddr, uint16_t port) {} */
 	};
 
 };

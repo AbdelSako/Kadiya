@@ -49,7 +49,11 @@ net::TCPpeer* net::TCPserver::accept(void)
 {
      if(!isValid()) {
           errno = EBADF;
+#ifdef _WIN32
+          throw net::SocketException("net::TCPserver::accept()", WSAGetLastError());
+#else
           throw net::SocketException("net::TCPserver::accept()", errno);
+#endif
      }
 
      net::SOCKET remoteSockfd;
@@ -57,7 +61,7 @@ net::TCPpeer* net::TCPserver::accept(void)
      void *addr;
      size_t addrsize = this->addrFamily == AF_INET ?
                         INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
-     char addrstr[addrsize];
+     char *addrstr = new char[addrsize];
      uint16_t port;
      struct net::PeerInfo peerInfo;
      std::memset(&peerInfo, 0, sizeof peerInfo);
@@ -88,12 +92,20 @@ net::TCPpeer* net::TCPserver::accept(void)
             break;
         default:
             errno = EAFNOSUPPORT;
+#ifdef _WIN32
+            throw net::SocketException("net::TCPserver::accept()", std::to_string(WSAGetLastError()));
+#else
             throw net::SocketException("net::TCPserver::accept()", errno);
+#endif
             break;
     }
 
     if(remoteSockfd == -1)
+#ifdef _WIN32
+        throw net::SocketException("net::TCPserver::accept()", std::to_string(WSAGetLastError()));
+#else
         throw net::SocketException("net::TCPserver::accept()", errno);
+#endif
     else {
  //       net::TCPpeer *peer = new net::TCPpeer(remoteSockfd);
         peerInfo.addr = addrstr;
@@ -104,6 +116,7 @@ net::TCPpeer* net::TCPserver::accept(void)
     }
 }
 
+/* START THE SERVER */
 int net::TCPserver::startServer(size_t threadNum)
 {
     if(threadNum == 0) return -1;
@@ -137,6 +150,7 @@ int net::TCPserver::startServer(size_t threadNum)
 	return 0;
 }
 
+/*Check if the server is running */
 bool net::TCPserver::hasStarted(void)
 {
 	return m_serverStarted;
@@ -154,7 +168,7 @@ void net::TCPserver::signalHandler(int signalNum)
 		return;
 	}
 
-	if(signalNum == SIGKILL) exit(signalNum);
+// 	if(signalNum == SIGKILL) exit(signalNum);
 
 	if(m_shutdownTCPservers == true) {
 		std::cout << "[+] Terminating the server by force...\n";
@@ -194,7 +208,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 			continue;
 		} catch(...) {
 			std::cout << "\n[*] This behavior needs to be investigated. \n\n[*] High Priority!\n";
-			server->signalHandler(SIGKILL);
+			server->signalHandler(SIGTERM);
 		}
 
 		if(!peer->isValid()) {

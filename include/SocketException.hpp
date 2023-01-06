@@ -40,12 +40,18 @@ namespace net
 				m_errno(errval) { }
 
 			void display(void) const {
-				m_errno ?
+				if (m_event.empty()) {
+#ifdef _WIN32
 					std::cout << "[*] " << m_call << ": "
-						<< std::strerror(m_errno) << '\n'
-					:
+						<< m_errno << '\n';
+#else
 					std::cout << "[*] " << m_call << ": "
-						<< m_event << '\n';
+						<< std::strerror(m_errno) << '\n';
+#endif
+				} else {
+				std::cout << "[*] " << m_call << ": "
+					<< m_event << '\n';
+				}
 			}
 
 			int logError(void);

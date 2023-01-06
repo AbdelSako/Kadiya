@@ -275,6 +275,8 @@ bool http::isAllChunk(const std::string rawResponse)
     }
 }
 
+
+//TODO: I forgot all about this function
 short http::recvAll(net::TCPpeer& peer, std::string& rawResponse)
 {
     /* recv first package and check if the chunked encoding is set.
@@ -288,6 +290,13 @@ short http::recvAll(net::TCPpeer& peer, std::string& rawResponse)
     if(transHead != resinfo.headers.end()) {
 
     }
+	return -1; //I even forgot the return statement;
+	//That return statement is just there for me to be able to compile
+	//this func on windows.
+	/*
+	This part of the code compiled on linux but not windows without the return
+	statement. Although the function was never called.
+	*/
 }
 
 

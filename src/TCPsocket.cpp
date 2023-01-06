@@ -28,7 +28,15 @@ SOFTWARE.
 /* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)
 {
-	m_sockfd = ::socket(addrFamily, SOCK_STREAM, 0);
+#ifdef _WIN32
+	// Initialize Winsock
+	//WSADATA wsaData;
+	m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
+	if (m_sockResult != 0) {
+		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
+	}
+#endif
+	this->m_sockfd = ::socket(addrFamily, SOCK_STREAM, 0);
 	if(!isValid())
 		throw net::SocketException("net::TCPsocket::socket()", errno);
 
@@ -55,7 +63,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 {
 	if(!isValid()) return -1;
-	int bind_ret, pton_ret;
+	int pton_ret;
 
 	switch (addrFamily) {
 		case AF_INET:
@@ -94,34 +102,55 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 	switch (addrFamily) {
 	case AF_INET:
-		bind_ret = ::bind(m_sockfd,
+		m_sockResult = ::bind(m_sockfd,
 			(struct sockaddr *)&m_localSockAddr, sizeof m_localSockAddr);
 		break;
 	case AF_INET6:
-		bind_ret = ::bind(m_sockfd,
+		m_sockResult = ::bind(m_sockfd,
 			(struct sockaddr *)&m_localSockAddr6, sizeof m_localSockAddr6);
 		break;
 	}
 
-	if(bind_ret == -1) {
+	if(m_sockResult == -1) {
 		throw SocketException("net::TCPsocket::bind()", errno);
 	}
 	else return 0;
 }
 
-short net::TCPsocket::poll(int events, int timeout)
+/* POLL METHOD ___________________*/
+short net::TCPsocket::poll(short events, int timeout)
 
 {
-	if(!isValid()) throw net::SocketException("net::TCPsocket::poll()", EBADF);
+	if(!isValid()) throw net::SocketException("net::TCPsocket::poll(): invalid socket.", EBADF);
 
+#ifdef _WIN32
+	WSAPOLLFD pollfds[1];
+	int nfds = 1;
+	fd_set fdRead, fdWrite, fdExcepts;
+	timeval timeVal;
+
+	std::memset((char*)&fdRead, 0, sizeof(fdRead));
+	std::memset((char*)&timeVal, 0, sizeof(timeVal));
+
+	fdRead.fd_array[0] = this->m_sockfd;
+	fdRead.fd_count = 1;
+	timeVal.tv_sec = timeout;
+	m_sockResult = select(nfds, &fdRead, 0, &fdRead, &timeVal);
+#else
 	struct pollfd pollfds[1];
+#endif
 	std::memset((char *) &pollfds, 0, sizeof(pollfds));
-
 	pollfds[0].fd = m_sockfd;
 	pollfds[0].events = events;
-
-	if (::poll(pollfds, 1, timeout) < 0)
-		throw net::SocketException("net::TCPsocket::poll()", errno);
+#ifdef _WIN32
+	//if (WSAPoll(pollfds, 1, timeout) == SOCKET_ERROR) {
+	if (m_sockResult == -1) {
+		throw net::SocketException("net::TCPsocket::poll():", WSAGetLastError());
+#else
+	if (::poll(pollfds, 1, timeout) < 0) {
+		throw net::SocketException("net::TCPsocket::poll():", errno);
+#endif
+	}
 
     return pollfds[0].revents;
 }
@@ -136,9 +165,9 @@ void net::TCPsocket::setNonBlocking(bool non_block)
 		iMode = 1;
 	else
 		iMode = 0;
-	int iResult = ioctlsocket(m_sockfd, FIONBIO, &iMode);
-	if (iResult != NO_ERROR)
-		throw net::SocketException("SET TCPsocket::fcntl()", iResult);
+	m_sockResult = ioctl(m_sockfd, FIONBIO, &iMode);
+	if (m_sockResult != NO_ERROR)
+		throw net::SocketException("net::TCPsocket::setNonBlocking", WSAGetLastError());
 
 #else
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
@@ -170,16 +199,20 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 	size_t totalByteRecv = 0;
 	int reio;
 	short repoll;
+#ifdef _WIN32
+	u_long value;
+#else
 	int value;
+#endif
 
 	std::memset(inBuffer, 0, inBufSize);
 
 	do {
-        repoll = net::TCPsocket::poll(POLLIN | POLLERR, timeout);
+        //repoll = net::TCPsocket::poll(POLLIN | POLLERR, timeout);
 
 #ifdef _WIN32
-		byteRecv = ::_read(m_sockfd, inBuffer + totalByteRecv,
-			inBufSize - totalByteRecv);
+		byteRecv = ::recv(m_sockfd, inBuffer + totalByteRecv,
+			inBufSize - totalByteRecv, 0);
 #else
         byteRecv = ::read(m_sockfd, inBuffer + totalByteRecv,
             inBufSize - totalByteRecv);
@@ -206,6 +239,47 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 	} while (inBufSize > totalByteRecv);
 
 	if(totalByteRecv == 0) throw net::SocketException("net::TCPsocket::read()", EPIPE);
+
+	return totalByteRecv;
+}
+
+/* NEW RECEIVE METHOD */
+int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize, int timeout)
+{
+	if (!isValid()) throw net::SocketException("net::TCPsocket::read()", EBADF);
+
+	ssize_t byteRecv;
+	size_t totalByteRecv = 0;
+	int ioctlResult;
+	short pollResult;
+	u_long value;
+
+	std::memset(inBuffer, 0, inBufSize);
+
+	do {
+		byteRecv = ::recv(m_sockfd, inBuffer + totalByteRecv,
+			inBufSize - totalByteRecv, 0);
+
+		switch ((int)byteRecv) {
+
+		case -1:
+			//if (errno == EAGAIN) {
+			//	ioctlResult = ::ioctl(m_sockfd, FIONREAD, &value);
+			//	if (value > 0) continue;
+			//}
+			return totalByteRecv;
+
+		case 0:
+			return totalByteRecv;
+
+		default:
+			totalByteRecv += (size_t)byteRecv;
+			break;
+		}
+		timeout = 0;
+	} while (inBufSize > totalByteRecv);
+
+	//if (totalByteRecv == 0) throw net::SocketException("net::TCPsocket::read()", EPIPE);
 
 	return totalByteRecv;
 }
@@ -253,8 +327,13 @@ int net::TCPsocket::write(const std::string outBuffer, uint16_t outBufSize, int 
 	do {
 		net::TCPsocket::poll(POLLOUT | POLLERR, timeout);
 
+#ifdef _WIN32
+		byteSent = ::send(m_sockfd, outBuffer.data() + totalByteSent,
+			outBufSize - totalByteSent, 0);
+#else
 		byteSent = ::write(m_sockfd, outBuffer.data() + totalByteSent,
 			outBufSize - totalByteSent);
+#endif
 
 			switch ((int)byteSent) {
 				case -1:
@@ -281,7 +360,45 @@ int net::TCPsocket::write(const std::string outBuffer, uint16_t outBufSize, int 
 
 	return totalByteSent;
 }
+/* SEND METHOD*/
+int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize, int timeout)
 
+{
+	if (!isValid()) throw net::SocketException("net::TCPsocket::write()", EBADF);
+
+	ssize_t byteSent;
+	size_t totalByteSent = 0;
+
+	do {
+		//net::TCPsocket::poll(POLLOUT | POLLERR, timeout);
+
+		byteSent = ::send(m_sockfd, outBuffer.data() + totalByteSent,
+			outBufSize - totalByteSent, 0);
+
+		switch ((int)byteSent) {
+		case -1:
+			/* Check if all data was sent */
+			if (errno == EAGAIN) {
+				//if (totalByteSent < outBufSize) {
+				//	continue;
+				//}
+			}
+			return totalByteSent;
+
+		case 0:
+			errno = EPIPE;
+			return totalByteSent;
+
+		default:
+			totalByteSent += byteSent;
+			break;
+		}
+	} while (outBufSize > totalByteSent);
+
+	return totalByteSent;
+}
+
+/* WRITE OPERATOR*/
 const net::TCPsocket& net::TCPsocket::operator<<(const std::string raw_data)
 {
 	uint16_t byteSent;
@@ -410,17 +527,20 @@ int net::TCPsocket::shutdown(int how)
 /* CLOSE socket(net::SOCKET) */
 int net::TCPsocket::close(void)
 {
-		if(isValid()) {
-			int close_ret =  ::close(m_sockfd);
-
-			if(close_ret == 0)
-				return 0;
-			else{
-				return -1;
-			}
-		}
+	if (isValid()) {
+#ifdef _WIN32
+		::closesocket(this->m_sockfd);
+		return 0;
+#else
+		//m_sockResult = ::close(this->m_sockfd);
+		if (::close(this->m_sockfd) == 0)
+			return 0;
 		else
 			return -1;
+#endif
+	}
+	else
+		return -1;
 }
 
 struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
@@ -431,9 +551,11 @@ struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
 /* keep alive */
 int net::TCPsocket::setKeepAlive(bool keep_alive)
 {
-	int optval;
-
-	optval = (int)keep_alive;
+#ifdef _WIN32
+	const char optval = (int)keep_alive;
+#else
+	int optval = (int)keep_alive;
+#endif
 	if (setsockopt(m_sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
 		return -1;
 

@@ -1,6 +1,7 @@
 #include "TCPserver.hpp"
 #include "TCPclient.hpp"
 #include "serverDB/httpProxy.hpp"
+#include "serverDB/socketServer.hpp"
 
 int main(void)
 {
@@ -17,9 +18,11 @@ int main(void)
 		server = new net::TCPserver(AF_INET, "127.0.0.1", 8080);
 
 		// Callback of server object is now pointing to the http proxy server function
-		server->serverCode = serverDB::HTTPproxyServer;
+		//server->serverCode = serverDB::HTTPproxyServer;
+		server->serverCode = serverDB::socketServer;
 
 	} catch (net::SocketException& e) {
+		std::cout << "[MAIN}........\n";
 		e.display();
 		return 1;
 	}
@@ -27,14 +30,16 @@ int main(void)
 	try{
 		/* returns 0 on success.
 		** Starts 15 detached threads, */
-		if(server->startServer(15) == -1) {
+		if(server->startServer(1) == -1) {
             std::cout << "[+] TCPserver failed to start...\n";
             return 1;
 		}
 
 		// Pauses execution until SIGINT is sent from the keyboard.
 		net::wait();
-
+#ifdef _WIN32
+		WSACleanup();
+#endif
 		return 0;
 	} catch(net::SocketException& e) {
 		e.display();

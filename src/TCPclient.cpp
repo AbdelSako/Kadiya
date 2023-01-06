@@ -80,18 +80,17 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
 
      /* The following lines, extract info of the remote address and store them in human readable in
      a member struct called "peerInfo". */
-     char *ipstr = nullptr;// [INET6_ADDRSTRLEN] ;
-     //char ipstr[this->addrFamily == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN]; // This line work on linux
+     char *ipstr = new char[this->addrFamily == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
      void *addr;
      switch ((int)m_remoteAddrPtr->ai_family) {
         case AF_INET:
-            ipstr = new char[INET_ADDRSTRLEN];
+            //ipstr = new char[INET_ADDRSTRLEN];
             addr = &((struct sockaddr_in*)m_remoteAddrPtr->ai_addr)->sin_addr;
             inet_ntop(m_remoteAddrPtr->ai_family, addr, ipstr, INET_ADDRSTRLEN);
             break;
 
         case AF_INET6:
-            ipstr = new char[INET6_ADDRSTRLEN];
+            //ipstr = new char[INET6_ADDRSTRLEN];
             addr = &((struct sockaddr_in6*)m_remoteAddrPtr->ai_addr)->sin6_addr;
             inet_ntop(m_remoteAddrPtr->ai_family, addr, ipstr, INET6_ADDRSTRLEN);
             break;
