@@ -43,7 +43,7 @@ int main(void)
 		return 0;
 	} catch(net::SocketException& e) {
 		e.display();
-		return 1;
+		return 0;
 	} catch(...) {
 		std::cout << "[*] Unexpected error caught...\n";
 		return 1;

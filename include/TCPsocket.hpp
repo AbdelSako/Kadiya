@@ -34,6 +34,7 @@ SOFTWARE.
 #define ssize_t INT64
 #define ioctl ioctlsocket
 #define SIGPIPE EPIPE
+#define EWOULDBLOCK WSAEWOULDBLOCK
 
 #include <windows.h>
 #include <winsock2.h>
@@ -87,6 +88,7 @@ namespace net
 			uint8_t sockProtocol;
 			SOCKET m_sockfd = -1;
 			int m_sockResult;
+			bool m_isBlocking = true;
 
 			struct addrinfo m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
 
@@ -149,11 +151,6 @@ namespace net
 			virtual int bind(const char *bindAddr, uint16_t port) ;
 
 		private:
-		    /* */
-			short poll(short events, int timeout);
-
-			/* Blocking*/
-			void setNonBlocking(bool non_block) ;
 
 			/* This function is a callee of operator>>.
 			** Reads data from a connected host.*/
@@ -166,6 +163,13 @@ namespace net
 			int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
 		public:
+			/*   */
+			/* Blocking*/
+			void setNonBlocking(bool non_block);
+
+			/*  */
+			short poll(short events, int timeout);
+
 			/* RECEIVE METHOD*/
 			int recv(char* inBuffer, uint16_t inBufSize, int timeout);
 
@@ -209,6 +213,11 @@ namespace net
 			bool isValid(void) const {
 				return m_sockfd != -1;
 			}
+
+			bool isBlocking(void);
+
+			/* Check for error after an operation */
+			int getLastError(void);
 	};
 
 

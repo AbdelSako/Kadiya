@@ -10,12 +10,19 @@ namespace serverDB {
 		uint16_t inBufSize = 200;
 		char* inBuffer = new char[inBufSize];
 		int byteRecv = 0, byteSend = 0;
-		while (byteRecv != -1 && byteSend != 1) {
-			byteRecv = peer.recv(inBuffer, inBufSize, 0);
-			std::cout << "Data Recv: " << inBuffer << std::endl;
-
-			byteSend = peer.send(data, data.length(), 0);
-			std::cout << "Data Sent Back.\n";
+		
+		try {
+			while (peer.getLastError() == 0) {
+				byteRecv = peer.recv(inBuffer, inBufSize, 0);
+				std::cout << "Data Recv: " << inBuffer << std::endl;
+				data = inBuffer;
+				byteSend = peer.send(data, data.length(), 0);
+				std::cout << "Data Sent Back.\n";
+			}
+		}
+		catch (net::SocketException& e) {
+			std::cout << "serverDB::socketServer() ";
+			e.display();
 		}
 		
 	}

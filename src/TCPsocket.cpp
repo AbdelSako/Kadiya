@@ -138,33 +138,38 @@ short net::TCPsocket::poll(short events, int timeout)
 	m_sockResult = select(nfds, &fdRead, 0, &fdRead, &timeVal);
 #else
 	struct pollfd pollfds[1];
-#endif
+
 	std::memset((char *) &pollfds, 0, sizeof(pollfds));
 	pollfds[0].fd = m_sockfd;
 	pollfds[0].events = events;
-#ifdef _WIN32
-	//if (WSAPoll(pollfds, 1, timeout) == SOCKET_ERROR) {
-	if (m_sockResult == -1) {
-		throw net::SocketException("net::TCPsocket::poll():", WSAGetLastError());
-#else
+
 	if (::poll(pollfds, 1, timeout) < 0) {
 		throw net::SocketException("net::TCPsocket::poll():", errno);
-#endif
 	}
+#endif
+	if (this->getLastError() != 0) {
+		throw net::SocketException("net::TCPsocket::poll():", WSAGetLastError());
+	}
+	return m_sockResult;
 
-    return pollfds[0].revents;
+    //return pollfds[0].revents;
+
 }
 
 /* Definition of net::TCPsocket::setNonBlocking */
-void net::TCPsocket::setNonBlocking(bool non_block)
+void net::TCPsocket::setNonBlocking(bool nonBlocking)
 {
 #ifdef _WIN32
 	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
 	u_long iMode;
-	if (non_block)
+	if (nonBlocking) {
 		iMode = 1;
-	else
+		this->m_isBlocking = false;
+	}
+	else {
 		iMode = 0;
+		this->m_isBlocking = true;
+	}
 	m_sockResult = ioctl(m_sockfd, FIONBIO, &iMode);
 	if (m_sockResult != NO_ERROR)
 		throw net::SocketException("net::TCPsocket::setNonBlocking", WSAGetLastError());
@@ -246,43 +251,46 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 /* NEW RECEIVE METHOD */
 int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize, int timeout)
 {
-	if (!isValid()) throw net::SocketException("net::TCPsocket::read()", EBADF);
-
 	ssize_t byteRecv;
-	size_t totalByteRecv = 0;
-	int ioctlResult;
-	short pollResult;
-	u_long value;
 
 	std::memset(inBuffer, 0, inBufSize);
 
-	do {
-		byteRecv = ::recv(m_sockfd, inBuffer + totalByteRecv,
-			inBufSize - totalByteRecv, 0);
+	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
 
-		switch ((int)byteRecv) {
 
-		case -1:
-			//if (errno == EAGAIN) {
-			//	ioctlResult = ::ioctl(m_sockfd, FIONREAD, &value);
-			//	if (value > 0) continue;
-			//}
-			return totalByteRecv;
+	if (this->getLastError() != 0) {
+		throw net::SocketException("net::TCPsocket::recv", this->getLastError());
+	}
 
-		case 0:
-			return totalByteRecv;
-
-		default:
-			totalByteRecv += (size_t)byteRecv;
-			break;
-		}
-		timeout = 0;
-	} while (inBufSize > totalByteRecv);
-
-	//if (totalByteRecv == 0) throw net::SocketException("net::TCPsocket::read()", EPIPE);
-
-	return totalByteRecv;
+	return byteRecv;
 }
+
+/* SEND METHOD*/
+int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize, int timeout)
+{
+	ssize_t byteSent;
+
+	byteSent = ::send(m_sockfd, outBuffer.data(), outBufSize, 0);
+
+	if (this->getLastError() != 0)
+		throw net::SocketException("net::TCPsocket::send()", this->getLastError());
+	return byteSent;
+}
+
+/* GET LAST ERROR METHOOD*/
+int net::TCPsocket::getLastError(void) {
+#ifdef _WIN32
+	return WSAGetLastError();
+#else
+	return errno;
+#endif
+}
+
+bool net::TCPsocket::isBlocking(void) {
+	/* TODO: This method will be implemented later, for now let's just return true */
+	return m_isBlocking;
+}
+
 /* Defition of net::TCPsocket::operator>> */
 const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
 {
@@ -310,7 +318,7 @@ const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
             e.display();
     }
 
-	delete inBuffer;
+	delete [] inBuffer;
 	inBuffer = nullptr;
 	return *this;
 }
@@ -360,43 +368,7 @@ int net::TCPsocket::write(const std::string outBuffer, uint16_t outBufSize, int 
 
 	return totalByteSent;
 }
-/* SEND METHOD*/
-int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize, int timeout)
 
-{
-	if (!isValid()) throw net::SocketException("net::TCPsocket::write()", EBADF);
-
-	ssize_t byteSent;
-	size_t totalByteSent = 0;
-
-	do {
-		//net::TCPsocket::poll(POLLOUT | POLLERR, timeout);
-
-		byteSent = ::send(m_sockfd, outBuffer.data() + totalByteSent,
-			outBufSize - totalByteSent, 0);
-
-		switch ((int)byteSent) {
-		case -1:
-			/* Check if all data was sent */
-			if (errno == EAGAIN) {
-				//if (totalByteSent < outBufSize) {
-				//	continue;
-				//}
-			}
-			return totalByteSent;
-
-		case 0:
-			errno = EPIPE;
-			return totalByteSent;
-
-		default:
-			totalByteSent += byteSent;
-			break;
-		}
-	} while (outBufSize > totalByteSent);
-
-	return totalByteSent;
-}
 
 /* WRITE OPERATOR*/
 const net::TCPsocket& net::TCPsocket::operator<<(const std::string raw_data)
