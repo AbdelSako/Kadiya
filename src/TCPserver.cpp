@@ -101,11 +101,8 @@ net::TCPpeer* net::TCPserver::accept(void)
     }
 
     if(remoteSockfd == -1)
-#ifdef _WIN32
-        throw net::SocketException("net::TCPserver::accept()", std::to_string(WSAGetLastError()));
-#else
-        throw net::SocketException("net::TCPserver::accept()", errno);
-#endif
+        throw net::SocketException("net::TCPserver::accept()", this->getLastError());
+
     else {
  //       net::TCPpeer *peer = new net::TCPpeer(remoteSockfd);
         peerInfo.addr = addrstr;
@@ -163,6 +160,7 @@ bool net::TCPserver::hasToShutdown(void)
 
 void net::TCPserver::signalHandler(int signalNum)
 {
+    /* Just one broken connection; we can continue. */
 	if(signalNum == SIGPIPE) {
 		std::cout << "[*] SIGPIPE caught...\n";
 		return;
@@ -203,6 +201,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 			peer = server->accept();
 			/* */
             peer->flags(SET_WILL_CLOSE_SOCKET, 0);
+
 		} catch(net::SocketException& e) {
 			e.display();
 			continue;
@@ -241,9 +240,9 @@ void net::handleConn(net::TCPpeer &peer)
     peer << "Response from default handler...\r\n\r\n";
 }
 
-void net::wait(void)
-{
-	std::mutex m ;
-	std::unique_lock<std::mutex> lock(m);
-	TCPserver::m_intSigCond.wait(lock, []{return TCPserver::m_shutdownTCPservers;});
+/* wait method */
+void net::TCPserver::wait(void) {
+    std::mutex m;
+    std::unique_lock<std::mutex> lock(m);
+    TCPserver::m_intSigCond.wait(lock, [] {return TCPserver::m_shutdownTCPservers; });
 }

@@ -57,6 +57,7 @@ SOFTWARE.
 #include <sys/ioctl.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 #endif
 
@@ -89,6 +90,9 @@ namespace net
 			SOCKET m_sockfd = -1;
 			int m_sockResult;
 			bool m_isBlocking = true;
+			/* "int timeout" member controls the "bool m_isBlocking" variable */
+			u_int recvTimeout = 10;
+			u_int sendTimeout = 10;
 
 			struct addrinfo m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
 
@@ -162,19 +166,22 @@ namespace net
 			** Writes data to a connected host.*/
 			int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
+			/*  */
+			void recvPoll(u_int timeout);
+
+			/* Send poll*/
+			void sendPoll(u_int timeout);
+
 		public:
 			/*   */
 			/* Blocking*/
 			void setNonBlocking(bool non_block);
 
-			/*  */
-			short poll(short events, int timeout);
-
 			/* RECEIVE METHOD*/
-			int recv(char* inBuffer, uint16_t inBufSize, int timeout);
+			int recv(char* inBuffer, uint16_t inBufSize);
 
 			/* send method*/
-			int send(const std::string outBuffer, uint16_t outBufSize, int timeout);
+			int send(const std::string outBuffer, uint16_t outBufSize);
 
 			// Reads from a connected host
 			const TCPsocket& operator>> (std::string &raw_data);
@@ -188,7 +195,14 @@ namespace net
 			/* Sets flag value */
             int flags(net::flags what, int value);
 
+			/*    */
             struct net::PeerInfo getPeerInfo(void);
+
+			/* Set recv timeout*/
+			void setRecvTimeout(u_int timeout);
+
+			/*  Set send timeout */
+			void setSendTimeout(u_int timeout);
 
             /* Shuts down the socket's read, write or both functions.
             *  Arguments:
@@ -218,6 +232,9 @@ namespace net
 
 			/* Check for error after an operation */
 			int getLastError(void);
+
+			std::string getPeerAddr(void);
+			uint32_t getPeerPort(void);
 	};
 
 

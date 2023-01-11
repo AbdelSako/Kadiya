@@ -31,14 +31,14 @@ int net::TCPsocket::socket(void)
 #ifdef _WIN32
 	// Initialize Winsock
 	//WSADATA wsaData;
-	m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
-	if (m_sockResult != 0) {
+	this->m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
+	if (this->m_sockResult != 0) {
 		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
 	}
 #endif
 	this->m_sockfd = ::socket(addrFamily, SOCK_STREAM, 0);
-	if(!isValid())
-		throw net::SocketException("net::TCPsocket::socket()", errno);
+	if(!this->isValid())
+		throw net::SocketException("net::TCPsocket::socket()", this->getLastError());
 
 #ifdef _WIN32
 	const char optval = 1;
@@ -52,9 +52,9 @@ int net::TCPsocket::socket(void)
 			::setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, optlen) :
 			::setsockopt(m_sockfd, IPPROTO_IPV6, SO_REUSEADDR, &optval, optlen)
 		) == -1) {
-		throw SocketException("::setsockopt() in net::TCPsocket::socket()", errno);
+		throw SocketException("::setsockopt() in net::TCPsocket::socket()", this->getLastError());
 	}
-	return m_sockfd;
+	return this->m_sockfd;
 }
 
 
@@ -62,8 +62,7 @@ int net::TCPsocket::socket(void)
 int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 {
-	if(!isValid()) return -1;
-	int pton_ret;
+	int inet_pton_result;
 
 	switch (addrFamily) {
 		case AF_INET:
@@ -71,7 +70,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 			m_localSockAddr.sin_family = addrFamily;
 			m_localSockAddr.sin_port = htons(port);
 			if(bindAddr)
-				pton_ret = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr.sin_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr.sin_addr);
 			else
 				m_localSockAddr.sin_addr.s_addr = INADDR_ANY;
 			break;
@@ -81,9 +80,9 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 			m_localSockAddr6.sin6_family = addrFamily;
 			m_localSockAddr6.sin6_port = htons(port);
 			if(bindAddr)
-				pton_ret = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6.sin6_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6.sin6_addr);
 			else
-				m_localSockAddr6.sin6_addr = in6addr_any;
+				m_localSockAddr6.sin6_addr = ::in6addr_any;
 			break;
 		default:
 			throw SocketException("net::TCPsocket::bind()",
@@ -92,68 +91,103 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 	}
 
 	if(bindAddr) {
-		if(pton_ret == 0) {
+		if(inet_pton_result == 0) {
 			throw SocketException("::inet_pton() in net::TCPsocket::bind()", "Bind address is invalid");
 		}
-		else if(pton_ret == -1) {
-			throw SocketException("::inet_pton() in net::TCPsocket::bind()", errno);
+		else if(inet_pton_result == -1) {
+			throw SocketException("::inet_pton() in net::TCPsocket::bind()", this->getLastError());
 		}
 	}
 
 	switch (addrFamily) {
 	case AF_INET:
-		m_sockResult = ::bind(m_sockfd,
+		this->m_sockResult = ::bind(m_sockfd,
 			(struct sockaddr *)&m_localSockAddr, sizeof m_localSockAddr);
 		break;
 	case AF_INET6:
-		m_sockResult = ::bind(m_sockfd,
+		this->m_sockResult = ::bind(m_sockfd,
 			(struct sockaddr *)&m_localSockAddr6, sizeof m_localSockAddr6);
 		break;
 	}
 
-	if(m_sockResult == -1) {
-		throw SocketException("net::TCPsocket::bind()", errno);
+	if(this->m_sockResult == -1) {
+		throw SocketException("net::TCPsocket::bind()", this->getLastError());
 	}
 	else return 0;
 }
 
 /* POLL METHOD ___________________*/
-short net::TCPsocket::poll(short events, int timeout)
-
+void net::TCPsocket::recvPoll(u_int timeout)
 {
-	if(!isValid()) throw net::SocketException("net::TCPsocket::poll(): invalid socket.", EBADF);
-
 #ifdef _WIN32
-	WSAPOLLFD pollfds[1];
 	int nfds = 1;
-	fd_set fdRead, fdWrite, fdExcepts;
+	fd_set readfds;
 	timeval timeVal;
+	int maxfds = this->m_sockfd + 1;
 
-	std::memset((char*)&fdRead, 0, sizeof(fdRead));
 	std::memset((char*)&timeVal, 0, sizeof(timeVal));
-
-	fdRead.fd_array[0] = this->m_sockfd;
-	fdRead.fd_count = 1;
 	timeVal.tv_sec = timeout;
-	m_sockResult = select(nfds, &fdRead, 0, &fdRead, &timeVal);
+	timeVal.tv_usec = 0;
 #else
 	struct pollfd pollfds[1];
 
-	std::memset((char *) &pollfds, 0, sizeof(pollfds));
-	pollfds[0].fd = m_sockfd;
-	pollfds[0].events = events;
-
-	if (::poll(pollfds, 1, timeout) < 0) {
-		throw net::SocketException("net::TCPsocket::poll():", errno);
-	}
+	std::memset((char*)pollfds, 0, sizeof(pollfds));
+	pollfds[0].fd = this->m_sockfd;
 #endif
-	if (this->getLastError() != 0) {
-		throw net::SocketException("net::TCPsocket::poll():", WSAGetLastError());
+
+	if (!this->isBlocking()) {
+#ifdef _WIN32
+		std::memset((char*)&readfds, 0, sizeof(fd_set));
+		readfds.fd_array[0] = this->m_sockfd;
+		readfds.fd_count = 1;
+		this->m_sockResult = select(maxfds, &readfds, 0, 0, &timeVal);
+		if (this->m_sockResult < 0)
+			throw net::SocketException("poll(): ", this->getLastError());
+#else
+		pollfds[0].events = POLLIN | POLLERR;
+		/* unlike select(), ::poll()'s timeout is in millisecond */
+		this->m_sockResult = ::poll(pollfds, 1, this->recvTimeout * 1000);
+#endif
 	}
-	return m_sockResult;
+}
 
-    //return pollfds[0].revents;
+/* SEND POLL */
+void net::TCPsocket::sendPoll(u_int timeout) {
+#ifdef _WIN32
+	int nfds = 1;
+	fd_set writefds;
+	timeval timeVal;
+	int maxfds = this->m_sockfd + 1;
 
+	std::memset((char*)&timeVal, 0, sizeof(timeVal));
+	timeVal.tv_sec = timeout;
+	timeVal.tv_usec = 0;
+#else
+	struct pollfd pollfds[1];
+
+	std::memset((char*)pollfds, 0, sizeof(pollfds));
+	pollfds[0].fd = this->m_sockfd;
+#endif
+
+	if (!this->isBlocking()) {
+#ifdef _WIN32
+		std::memset((char*)&writefds, 0, sizeof(fd_set));
+		writefds.fd_array[0] = this->m_sockfd;
+		writefds.fd_count = 1;
+		this->m_sockResult = select(maxfds, 0, &writefds, 0, &timeVal);
+		if (this->m_sockResult < 0)
+			throw net::SocketException("poll(): ", this->getLastError());
+#else
+		pollfds[0].events = POLLOUT | POLLERR;
+		/* Unlike select (), ::poll()'s timeout is in millisecond */
+		this->m_sockResult = ::poll(pollfds, 1, this->sendTimeout * 1000);
+#endif
+
+	}
+
+	if (this->m_sockResult < 0) {
+		throw net::SocketException("net::TCPsocket::poll():", this->getLastError());
+	}
 }
 
 /* Definition of net::TCPsocket::setNonBlocking */
@@ -161,38 +195,24 @@ void net::TCPsocket::setNonBlocking(bool nonBlocking)
 {
 #ifdef _WIN32
 	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
-	u_long iMode;
-	if (nonBlocking) {
-		iMode = 1;
-		this->m_isBlocking = false;
-	}
-	else {
-		iMode = 0;
-		this->m_isBlocking = true;
-	}
-	m_sockResult = ioctl(m_sockfd, FIONBIO, &iMode);
+	u_long iMode = (u_long)nonBlocking;
+
+	m_sockResult = ioctlsocket(m_sockfd, FIONBIO, &iMode);
 	if (m_sockResult != NO_ERROR)
-		throw net::SocketException("net::TCPsocket::setNonBlocking", WSAGetLastError());
+		throw net::SocketException("net::TCPsocket::setNonBlocking", this->getLastError());
 
 #else
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
 	if(flags == -1)
-		throw net::SocketException("GET TCPsocket::fcntl()", errno);
+		throw net::SocketException("GET TCPsocket::fcntl()", this->getLastError());
 
-	//Check if socket is already in non-blocking mode
-	if( (flags & O_NONBLOCK) && non_block)
-		return;
-
-	// Check if socket is already in blocking mode
-	if( !(flags & O_NONBLOCK) && !non_block)
-		return;
-
-	// Set opt
-	if(fcntl(m_sockfd, F_SETFL, non_block ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK)) == -1)
-		throw net::SocketException("SET TCPsocket::fcntl()", errno);
-
-	return;
+	if(this->m_sockResult = fcntl(
+		m_sockfd, F_SETFL, nonBlocking ? 
+		(flags | O_NONBLOCK) : 
+		(flags & ~O_NONBLOCK) ) == -1)
+			throw net::SocketException("SET TCPsocket::fcntl()", this->getLastError());
 #endif
+	this->m_isBlocking = !nonBlocking;
 }
 
 /* Definition of net::TCPsocket::read */
@@ -214,6 +234,8 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 
 	do {
         //repoll = net::TCPsocket::poll(POLLIN | POLLERR, timeout);
+		if (this->recvTimeout > -1)
+			this->recvPoll(this->recvTimeout);
 
 #ifdef _WIN32
 		byteRecv = ::recv(m_sockfd, inBuffer + totalByteRecv,
@@ -227,7 +249,7 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 
 			case -1:
 			    if(errno == EAGAIN) {
-                    net::TCPsocket::poll(POLLIN | POLLERR, 300);
+                    net::TCPsocket::recvPoll(300);
                     reio = ::ioctl(m_sockfd, FIONREAD, &value);
                     if(value > 0) continue;
 			    }
@@ -249,14 +271,16 @@ int net::TCPsocket::read(char *inBuffer, uint16_t inBufSize, int timeout)
 }
 
 /* NEW RECEIVE METHOD */
-int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize, int timeout)
+int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize)
 {
 	ssize_t byteRecv;
 
 	std::memset(inBuffer, 0, inBufSize);
 
-	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
+	if (!this->isBlocking())
+		this->recvPoll(this->recvTimeout);
 
+	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
 
 	if (this->getLastError() != 0) {
 		throw net::SocketException("net::TCPsocket::recv", this->getLastError());
@@ -266,15 +290,41 @@ int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize, int timeout)
 }
 
 /* SEND METHOD*/
-int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize, int timeout)
+int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize)
 {
 	ssize_t byteSent;
+	if (!this->isBlocking())
+		this->sendPoll(this->sendTimeout);
 
 	byteSent = ::send(m_sockfd, outBuffer.data(), outBufSize, 0);
 
 	if (this->getLastError() != 0)
 		throw net::SocketException("net::TCPsocket::send()", this->getLastError());
 	return byteSent;
+}
+
+/*  SET RECV TIMEOUT */
+void net::TCPsocket::setRecvTimeout(u_int timeout) {
+	this->recvTimeout = timeout;
+
+	if (timeout < 0) {
+		this->setNonBlocking(false);
+	}
+	else {
+		this->setNonBlocking(true);
+	}
+}
+
+/* SET SEND TIMEOUT */
+void net::TCPsocket::setSendTimeout(u_int timeout) {
+	this->sendTimeout = timeout;
+
+	if (timeout < 0) {
+		this->setNonBlocking(false);
+	}
+	else {
+		this->setNonBlocking(true);
+	}
 }
 
 /* GET LAST ERROR METHOOD*/
@@ -288,7 +338,7 @@ int net::TCPsocket::getLastError(void) {
 
 bool net::TCPsocket::isBlocking(void) {
 	/* TODO: This method will be implemented later, for now let's just return true */
-	return m_isBlocking;
+	return this->m_isBlocking;
 }
 
 /* Defition of net::TCPsocket::operator>> */
@@ -301,7 +351,8 @@ const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
 	int timeout = this->m_flags[GET_RECV_TIMEOUT];
 
 	try {
-        net::TCPsocket::setNonBlocking(true);
+        //this->setNonBlocking(true);
+		this->setRecvTimeout(timeout);
         do {
             byteRecv = TCPsocket::read(inBuffer, inBufSize, timeout);
             timeout = 100;
@@ -313,7 +364,8 @@ const net::TCPsocket& net::TCPsocket::operator>>(std::string &raw_data)
             if(byteRecv < inBufSize) break;
 
         } while(byteRecv > 0);
-        net::TCPsocket::setNonBlocking(false);
+        //this->setNonBlocking(false);
+		this->setRecvTimeout(-1);
     } catch(net::SocketException& e) {
             e.display();
     }
@@ -331,9 +383,11 @@ int net::TCPsocket::write(const std::string outBuffer, uint16_t outBufSize, int 
 
 	ssize_t byteSent;
 	size_t totalByteSent = 0;
-
+	timeout = this->sendTimeout;
 	do {
-		net::TCPsocket::poll(POLLOUT | POLLERR, timeout);
+		//net::TCPsocket::poll(POLLOUT | POLLERR, timeout);
+		if (this->recvTimeout > -1)
+			this->sendPoll(timeout);
 
 #ifdef _WIN32
 		byteSent = ::send(m_sockfd, outBuffer.data() + totalByteSent,
@@ -385,7 +439,8 @@ const net::TCPsocket& net::TCPsocket::operator<<(const std::string raw_data)
 	}
 
     try {
-        setNonBlocking(true);
+        //this->setNonBlocking(true);
+		this->setSendTimeout(timeout);
         if(chunks == 0) {
             byteSent = TCPsocket::write(raw_data, data_size, timeout);
             totalByteSent += byteSent;
@@ -411,7 +466,8 @@ const net::TCPsocket& net::TCPsocket::operator<<(const std::string raw_data)
             }
         }
 
-        setNonBlocking(false);
+        //this->setNonBlocking(false);
+		this->setSendTimeout(-1);
 
     } catch(net::SocketException& e) {
         e.display();
@@ -519,6 +575,15 @@ struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
 {
     return peerInfo;
 }
+
+std::string net::TCPsocket::getPeerAddr(void) {
+	return this->peerInfo.addr;
+}
+uint32_t net::TCPsocket::getPeerPort(void) {
+	return this->peerInfo.port;
+}
+
+
 
 /* keep alive */
 int net::TCPsocket::setKeepAlive(bool keep_alive)

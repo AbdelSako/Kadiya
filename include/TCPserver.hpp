@@ -87,11 +87,17 @@ namespace net
 			/* checks is server has to shutdown */
 			bool hasToShutdown(void);
 
+			/*ait Method*/
+			void wait(void);
+
 			/* Signal handler */
 			static void signalHandler(int signalNum);
 
 			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
 			void (*serverCode)(TCPpeer) = nullptr;
+
+			/* Checking if I  could also use a class pointer */
+			void* classServerCode;
 	};
 
 	/* */
