@@ -33,7 +33,8 @@ SOFTWARE.
 #define __http_handlers
 namespace http
 {
-	static const std::list<std::string> METHODS = {
+	static const std::list<std::string> METHODS =
+	{
 			"GET",
 			"HEAD",
 			"POST",

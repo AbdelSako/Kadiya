@@ -17,7 +17,7 @@ add_executable (mainHttpProxy2.0  "examples/serverAPI/mainHttpProxy2.0.cpp" "src
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET mainHttpProxy PROPERTY CXX_STANDARD 20)
   set_property(TARGET socketServer PROPERTY CXX_STANDARD 20)
-  set_property(TARGET mainHttpProxy2.0 PROPERTY CXX_STANDARD 20)
+  set_property(TARGET mainHttpProxy2.0 PROPERTY CXX_STANDARD  20)
 endif()
 
 # TODO: Add tests and install targets if needed.

@@ -91,7 +91,7 @@ net::TCPpeer* net::TCPserver::accept(void)
             ::inet_ntop(AF_INET6, addr, addrstr, addrsize);
             break;
         default:
-            errno = EAFNOSUPPORT;
+            //errno = EAFNOSUPPORT;
 #ifdef _WIN32
             throw net::SocketException("net::TCPserver::accept()", std::to_string(WSAGetLastError()));
 #else
@@ -108,7 +108,8 @@ net::TCPpeer* net::TCPserver::accept(void)
         peerInfo.addr = addrstr;
         peerInfo.port = port;
         peerInfo.af = this->addrFamily;
-        net::TCPpeer *peer = new net::TCPpeer(remoteSockfd, peerInfo);
+        peerInfo.sockfd = remoteSockfd;
+        net::TCPpeer *peer = new net::TCPpeer(peerInfo);
         return peer;
     }
 }
@@ -232,12 +233,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 
 void net::handleConn(net::TCPpeer &peer)
 {
-    std::string req;
-
-    peer >> req;
-    std::cout << "From: " << req << '\n';
-
-    peer << "Response from default handler...\r\n\r\n";
+    
 }
 
 /* wait method */

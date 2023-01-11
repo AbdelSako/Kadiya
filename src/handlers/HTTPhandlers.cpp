@@ -243,20 +243,22 @@ http::urlParser::urlParser(std::string fullUrl)
 	}
 }
 
-void http::recvUntilRC(net::TCPpeer& TCPpeer, std::string& rawRequest)
-{
-	std::string tempBuf;
-	do {
-		/* Will drop the client's request if the request data does
-		 * not have 2 trailing "return carriages" */
-		TCPpeer >> tempBuf;
-		if(tempBuf.empty()) break;
-		rawRequest += tempBuf;
-		/* Oh!, maybe it's "new lines" instead of "return carriages"*/
-		if(rawRequest.rfind("\n\n") != std::string::npos)
-			break;
-	} while(rawRequest.rfind("\r\n\r\n") == std::string::npos);
-}
+
+//VOID HTTP::RECVUNTILRC(NET::TCPPEER& TCPPEER, STD::STRING& RAWREQUEST)
+//{
+//	STD::STRING TEMPBUF;
+//	DO {
+//		/* WILL DROP THE CLIENT'S REQUEST IF THE REQUEST DATA DOES
+//		 * NOT HAVE 2 TRAILING "RETURN CARRIAGES" */
+//		TCPPEER >> TEMPBUF;
+//		IF(TEMPBUF.EMPTY()) BREAK;
+//		RAWREQUEST += TEMPBUF;
+//		/* OH!, MAYBE IT'S "NEW LINES" INSTEAD OF "RETURN CARRIAGES"*/
+//		IF(RAWREQUEST.RFIND("\N\N") != STD::STRING::NPOS)
+//			BREAK;
+//	} WHILE(RAWREQUEST.RFIND("\R\N\R\N") == STD::STRING::NPOS);
+//}
+
 
 bool http::isAllChunk(const std::string rawResponse)
 {

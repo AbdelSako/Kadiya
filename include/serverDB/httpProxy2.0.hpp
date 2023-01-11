@@ -59,7 +59,7 @@ namespace serverDB
 		{
 			/* Let's receive some data and look for the first double return cariage ;
 			that would be this string "\n\r\n\r" */
-			memset(classBuffer, 0, classBuffersize);
+			//memset(classBuffer, 0, classBuffersize);
 			peer->recv(this->classBuffer, this->classBuffersize);
 			this->dataReceived->append(this->classBuffer);
 			std::cout << *dataReceived << std::endl;
