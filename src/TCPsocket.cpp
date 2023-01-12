@@ -25,17 +25,25 @@ SOFTWARE.
 #include "TCPsocket.hpp"
 #include "SocketException.hpp"
 
+#ifdef _WIN32
+void net::TCPsocket::WSAStartup()
+{
+	// Initialize Winsock
+	//WSADATA wsaData;
+	this->m_sockResult = ::WSAStartup(MAKEWORD(2, 2), &m_wsaData);
+	if (this->m_sockResult != 0) {
+		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
+	}
+}
+#endif
+
 /* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)
 {
 #ifdef _WIN32
-	// Initialize Winsock
-	//WSADATA wsaData;
-	this->m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
-	if (this->m_sockResult != 0) {
-		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
-	}
+	this->WSAStartup();
 #endif
+
 	this->m_sockfd = ::socket(this->addrFamily, SOCK_STREAM, 0);
 	if(!this->isValid())
 		throw net::SocketException("net::TCPsocket::socket()", this->getLastError());
@@ -63,26 +71,30 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 {
 	int inet_pton_result;
+	struct sockaddr_in* m_localSockAddr;
+	struct sockaddr_in6* m_localSockAddr6;
 
 	switch (addrFamily) {
 		case AF_INET:
-			std::memset(&m_localSockAddr, 0, sizeof m_localSockAddr);
-			m_localSockAddr.sin_family = addrFamily;
-			m_localSockAddr.sin_port = htons(port);
+			m_localSockAddr = new sockaddr_in;
+			std::memset(m_localSockAddr, 0, sizeof m_localSockAddr);
+			m_localSockAddr->sin_family = addrFamily;
+			m_localSockAddr->sin_port = htons(port);
 			if(bindAddr)
-				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr.sin_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr->sin_addr);
 			else
-				m_localSockAddr.sin_addr.s_addr = INADDR_ANY;
+				m_localSockAddr->sin_addr.s_addr = INADDR_ANY;
 			break;
 		case AF_INET6:
-			std::memset(&m_localSockAddr6, 0, sizeof m_localSockAddr6);
-			m_localSockAddr6.sin6_flowinfo = 0;
-			m_localSockAddr6.sin6_family = addrFamily;
-			m_localSockAddr6.sin6_port = htons(port);
+			m_localSockAddr6 = new sockaddr_in6;
+			std::memset(m_localSockAddr6, 0, sizeof m_localSockAddr6);
+			m_localSockAddr6->sin6_flowinfo = 0;
+			m_localSockAddr6->sin6_family = addrFamily;
+			m_localSockAddr6->sin6_port = htons(port);
 			if(bindAddr)
-				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6.sin6_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6->sin6_addr);
 			else
-				m_localSockAddr6.sin6_addr = ::in6addr_any;
+				m_localSockAddr6->sin6_addr = ::in6addr_any;
 			break;
 		default:
 			throw SocketException("net::TCPsocket::bind()",
@@ -101,12 +113,12 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 	switch (addrFamily) {
 	case AF_INET:
-		this->m_sockResult = ::bind(m_sockfd,
-			(struct sockaddr *)&m_localSockAddr, sizeof m_localSockAddr);
+		this->m_sockResult = ::bind(this->m_sockfd,
+			(struct sockaddr *)m_localSockAddr, sizeof m_localSockAddr);
 		break;
 	case AF_INET6:
-		this->m_sockResult = ::bind(m_sockfd,
-			(struct sockaddr *)&m_localSockAddr6, sizeof m_localSockAddr6);
+		this->m_sockResult = ::bind(this->m_sockfd,
+			(struct sockaddr *)m_localSockAddr6, sizeof m_localSockAddr6);
 		break;
 	}
 
@@ -191,7 +203,7 @@ void net::TCPpeer::sendPoll(u_int timeout) {
 }
 
 /* Definition of net::TCPsocket::setNonBlocking */
-void net::TCPsocket::setNonBlocking(bool nonBlocking)
+void net::TCPpeer::setNonBlocking(bool nonBlocking)
 {
 #ifdef _WIN32
 	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
@@ -288,68 +300,7 @@ bool net::TCPpeer::isBlocking(void) {
 	return this->m_isBlocking;
 }
 
-/* flags's method will soon be removed because it's making the class complicated */
-int net::TCPsocket::flags(net::flags what)
-{
-    switch(what)
-    {
-    case GET_WILL_CLOSE_SOCKET:
-        return this->m_flags[what];
-
-    case GET_KEEP_ALIVE:
-        return this->m_flags[what];
-
-    case GET_TRANS_BUFFER:
-        return this->m_flags[what];
-
-    case GET_RECV_TIMEOUT:
-        return this->m_flags[what];
-
-    case GET_SEND_TIMEOUT:
-        return this->m_flags[what];
-
-    default:
-        return -1;
-    }
-}
-
-int net::TCPsocket::flags(net::flags what, int value)
-{
-    switch(what)
-    {
-    case SET_WILL_CLOSE_SOCKET:
-        this->m_flags[what] = value;
-        return 0;
-
-    case SET_KEEP_ALIVE:
-        if((net::TCPsocket::setKeepAlive((bool)value)) == -1)
-            return -1;
-        else
-            return 0;
-
-    case SET_TRANS_BUFFER:
-        if(this->m_flags[what] != value) {
-            if(value < 1) return -1;
-
-            this->m_flags[what] = value;
-            return 0;
-        }
-        return 0;
-
-    case SET_RECV_TIMEOUT:
-        this->m_flags[what] = value;
-        return 0;
-
-    case SET_SEND_TIMEOUT:
-        this->m_flags[what] = value;
-        return 0;
-
-    default:
-        return -1;
-    }
-}
-
-/* */
+/* SHUTDOWN SOCKET */
 int net::TCPsocket::shutdown(int how)
 {
 	if(isValid()) {
@@ -380,22 +331,9 @@ int net::TCPsocket::close(void)
 		return -1;
 }
 
-struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
-{
-    return peerInfo;
-}
-
-std::string net::TCPsocket::getPeerAddr(void) {
-	return this->peerInfo.addr;
-}
-uint32_t net::TCPsocket::getPeerPort(void) {
-	return this->peerInfo.port;
-}
-
-
 
 /* keep alive */
-int net::TCPsocket::setKeepAlive(bool keep_alive)
+int net::TCPpeer::setKeepAlive(bool keep_alive)
 {
 #ifdef _WIN32
 	const char optval = (int)keep_alive;

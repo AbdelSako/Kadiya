@@ -34,7 +34,7 @@ SOFTWARE.
 #define ssize_t INT64
 #define ioctl ioctlsocket
 #define SIGPIPE EPIPE
-#define EWOULDBLOCK WSAEWOULDBLOCK
+//#define EWOULDBLOCK WSAEWOULDBLOCK
 
 #include <windows.h>
 #include <winsock2.h>
@@ -76,9 +76,6 @@ SOFTWARE.
 
 namespace net
 {
-
-    typedef int SOCKET;
-
 	class TCPsocket
 	{
 	protected:
@@ -88,57 +85,27 @@ namespace net
 #endif
 		int addrFamily;
 		uint8_t sockProtocol;
-		SOCKET m_sockfd = -1;
+		::SOCKET m_sockfd = -1;
 		int m_sockResult;
-		bool m_isBlocking = true;
-		/* "int timeout" member controls the "bool m_isBlocking" variable */
-		u_int recvTimeout = 10;
-		u_int sendTimeout = 10;
-
-		struct addrinfo m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
-
-		struct sockaddr_in m_localSockAddr;
-		struct sockaddr_in6 m_localSockAddr6;
-
-		struct net::PeerInfo peerInfo;
-
-		// Store connected peer's info in human readable
-
-		/* Tells the object when to change its behavior:
-		** Per example, when to change the transmission buffer or
-		** to change the recv/send timeout or to set keep-alive.
-		** You can also get the values that are used by the object
-		** or check if keep-alive is enabled.
-		** Consult "net::TCPsocket::flags" overloaded functions and
-		** "net::flags" enumeration in __TCPsocket.hpp */
-		int m_flags[10];
 
 	public:
-		/* Initializes the object with default flags */
-		TCPsocket(int Family):
-			addrFamily(Family)
-        {
-            this->m_flags[SET_WILL_CLOSE_SOCKET] = 1;
-            this->m_flags[SET_KEEP_ALIVE] = 0;
-            this->m_flags[SET_TRANS_BUFFER] = 1000*30;
-            this->m_flags[SET_RECV_TIMEOUT] = 1000*10;
-            this->m_flags[SET_SEND_TIMEOUT] = 1000*10;
-        }
+		/* Use this constructor when instantiating the TCPserver object */
+		/* @Family: AF_INET or AF_INET6 */
+		TCPsocket(int Family): addrFamily(Family){}
 
-		/* copies a connected tcp socket 
-			We will instantiate the TCPpeer class */
+		/* Use this constructor when instantiating the TCPpeer class */
 		TCPsocket(void) {}
 
 		/* Shuts down and closes the socket */
 		~TCPsocket(void) {
-			if(isValid()) {
-                if(m_flags[GET_WILL_CLOSE_SOCKET]) {
-					this->shutdown(SHUT_RDWR);
-                    this->close();
-                }
-			}
+			if(isValid())
+				this->close();
 		}
 
+	private:
+#ifdef _WIN32
+		void WSAStartup(void);
+#endif
 	protected:
 		/* Initializes the socket fd */
 		virtual int socket(void);
@@ -147,37 +114,7 @@ namespace net
 			* int 0 to bind to any address*/
 		virtual int bind(const char *bindAddr, uint16_t port) ;
 
-	private:
-
-		/* This function is a callee of operator>>.
-		** Reads data from a connected host.*/
-		//int read(char *inBuffer, uint16_t inBufSize, int timeout);
-			
-		/* This function is a callee of operator<<.
-		** Writes data to a connected host.*/
-		//int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
-
 	public:
-		/*   */
-		/* Blocking*/
-		void setNonBlocking(bool non_block);
-
-		// Reads from a connected host
-		//const TCPsocket& operator>> (std::string &raw_data);
-
-		// Writes to a connected host
-		//const TCPsocket& operator<< (const std::string raw_data);
-
-        /* Gets a flag */
-		int flags(net::flags what);
-
-		/* Sets flag value */
-        int flags(net::flags what, int value);
-
-		/*    */
-        struct net::PeerInfo getPeerInfo(void);
-
-
         /* Shuts down the socket's read, write or both functions.
         *  Arguments:
             (how)
@@ -191,10 +128,6 @@ namespace net
 
 		/* Close this socket fd */
 		int close(void);
-
-    private:
-		/* enable KEEP-ALIVE */
-		int setKeepAlive(bool keep_alive) ;
 
     public:
 		/* checks whether the socket is valid or not */
@@ -213,25 +146,26 @@ namespace net
 	/* net::TCPpeer takes a connected socket as an argument */
 	class TCPpeer: public TCPsocket
 	{
-	public:
+	private:
+		std::string ipAddress;
+		uint16_t portNumber;
+		bool m_isBlocking = true;
+		u_int recvTimeout = 10;
+		u_int sendTimeout = 10;
 
+	public:
 		TCPpeer(struct net::PeerInfo &peerInfo) {
 			this->ipAddress = peerInfo.addr;
 			this->portNumber = peerInfo.port;
-			this->addressFamily = peerInfo.af;
+			this->addrFamily = peerInfo.af;
 			this->m_sockfd = peerInfo.sockfd;
 
 		}
 
-
 	private:
-		std::string ipAddress;
-		uint16_t portNumber;
-		uint8_t addressFamily;
-	//	private:
-		    /* Making them inaccessible. */
-		/*	int socket(void) {}
-			int bind(const char *bindAddr, uint16_t port) {} */
+		/* Making them inaccessible. */
+		/*int socket(void) {}
+		int bind(const char *bindAddr, uint16_t port) {} */
 			/*  */
 		void recvPoll(u_int timeout);
 
@@ -246,12 +180,20 @@ namespace net
 
 		/* is the socket in blocking mode */
 		bool isBlocking(void);
+
+		/* enable KEEP-ALIVE */
+		/* Not fully implemented yet */
+		int setKeepAlive(bool keep_alive);
 	public:
 		/* RECEIVE METHOD*/
 		int recv(char* inBuffer, uint16_t inBufSize);
 
 		/* send method*/
 		int send(const std::string outBuffer, uint16_t outBufSize);
+
+		/*   */
+		/* Blocking*/
+		void setNonBlocking(bool non_block);
 	};
 
 };

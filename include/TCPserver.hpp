@@ -45,6 +45,8 @@ namespace net
 			static std::condition_variable m_intSigCond;
 			static bool m_shutdownTCPservers;
 			bool m_serverStarted;
+			struct sockaddr_in* peerAddr;
+			struct sockaddr_in6* peerAddr6;
 
 		public:
 			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
@@ -59,6 +61,11 @@ namespace net
                 try{
                     TCPsocket::socket();
                     TCPsocket::bind(serverAddr, serverPort);
+					if (this->addrFamily == AF_INET)
+						peerAddr = new sockaddr_in();
+					else
+						peerAddr6 = new sockaddr_in6;
+
                 } catch (SocketException& e) {
                     throw;
                 }
@@ -70,7 +77,15 @@ namespace net
 				/* accept */
 				net::TCPpeer* accept(void);
 
-			~TCPserver(void) { --serverInstances;}
+			~TCPserver(void)
+			{
+				--serverInstances;
+				/* Deleting the sstruct that was initialize in the constructor */
+				if (this->addrFamily == AF_INET)
+					delete peerAddr;
+				else
+					delete peerAddr6;
+			}
 
 			/* This function can be ran right after instantiation...to start the
 			** server.

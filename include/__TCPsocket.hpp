@@ -46,9 +46,9 @@ namespace net
     struct PeerInfo{
         PeerInfo() {}
         std::string addr;
-        uint16_t port;
+        uint32_t port;
         uint8_t af;
-        uint32_t sockfd;
+        ::SOCKET sockfd;
     };
 };
 #endif // __TCPstuff

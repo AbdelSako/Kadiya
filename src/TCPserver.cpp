@@ -56,38 +56,36 @@ net::TCPpeer* net::TCPserver::accept(void)
 #endif
      }
 
-     net::SOCKET remoteSockfd;
+     ::SOCKET remoteSockfd;
      socklen_t peerAddrSize;
      void *addr;
      size_t addrsize = this->addrFamily == AF_INET ?
                         INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
      char *addrstr = new char[addrsize];
-     uint16_t port;
+     uint32_t port;
      struct net::PeerInfo peerInfo;
      std::memset(&peerInfo, 0, sizeof peerInfo);
 
     switch (addrFamily) {
         case AF_INET:
-            struct sockaddr_in peerAddr;
             std::memset(&peerAddr, 0, sizeof peerAddr);
             peerAddrSize = sizeof peerAddr;
 
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)&peerAddr,
                                     &peerAddrSize);
-            addr = (void*)(&peerAddr.sin_addr);
-            port = ::ntohs(peerAddr.sin_port);
+            addr = (void*)(&peerAddr->sin_addr);
+            port = ::ntohs(peerAddr->sin_port);
             ::inet_ntop(AF_INET, addr, addrstr, addrsize);
             break;
 
         case AF_INET6:
-            struct sockaddr_in6 peerAddr6;
             std::memset(&peerAddr6, 0, sizeof peerAddr6);
             peerAddrSize = sizeof peerAddr6;
 
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)&peerAddr6,
                                     &peerAddrSize);
-            addr = (void*)(&peerAddr6.sin6_addr);
-            port = ::ntohs(peerAddr.sin_port);
+            addr = (void*)(&peerAddr6->sin6_addr);
+            port = ::ntohs(peerAddr6->sin6_port);
             ::inet_ntop(AF_INET6, addr, addrstr, addrsize);
             break;
         default:
@@ -184,7 +182,7 @@ void net::TCPserver::signalHandler(int signalNum)
 void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 {
 	static int threadCount = 0;
-	net::SOCKET remoteSock;
+	::SOCKET remoteSock;
 	std::string callbacksID;
 	std::thread* thr;
 
@@ -200,8 +198,6 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		try {;
 			/* Accept incoming */
 			peer = server->accept();
-			/* */
-            peer->flags(SET_WILL_CLOSE_SOCKET, 0);
 
 		} catch(net::SocketException& e) {
 			e.display();

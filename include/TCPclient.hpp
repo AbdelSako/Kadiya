@@ -30,9 +30,28 @@ SOFTWARE.
 namespace net
 {
 	/* Not done with this class yet */
-	class TCPclient {
+	class TCPclient: public TCPsocket {
+	private:
+		struct addrinfo* m_hints, * m_remoteAddrInfo, * m_remoteAddrPtr;
+		struct net::PeerInfo *peerInfo;
+		char* ipstr;
 	public:
-			static TCPpeer connect(const std::string remoteAddr, uint16_t port);
+		TCPclient(void): TCPsocket() {
+			this->m_hints = new addrinfo;
+			this->m_remoteAddrInfo = new addrinfo;
+			//this->m_remoteAddrPtr = new addrinfo;
+			this->peerInfo = new PeerInfo;
+			this->ipstr = new char[INET6_ADDRSTRLEN];
+
+		}
+		~TCPclient(void) {
+			delete this->m_hints;
+			delete this->m_remoteAddrInfo;
+			//delete this->m_remoteAddrPtr;
+			delete this->peerInfo;
+			delete ipstr;
+		}
+			TCPpeer connect(const std::string remoteAddr, uint16_t port);
 
 	};
 };
