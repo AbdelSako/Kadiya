@@ -36,7 +36,7 @@ int net::TCPsocket::socket(void)
 		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
 	}
 #endif
-	this->m_sockfd = ::socket(addrFamily, SOCK_STREAM, 0);
+	this->m_sockfd = ::socket(this->addrFamily, SOCK_STREAM, 0);
 	if(!this->isValid())
 		throw net::SocketException("net::TCPsocket::socket()", this->getLastError());
 
@@ -117,7 +117,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 }
 
 /* POLL METHOD ___________________*/
-void net::TCPsocket::recvPoll(u_int timeout)
+void net::TCPpeer::recvPoll(u_int timeout)
 {
 #ifdef _WIN32
 	int nfds = 1;
@@ -152,7 +152,7 @@ void net::TCPsocket::recvPoll(u_int timeout)
 }
 
 /* SEND POLL */
-void net::TCPsocket::sendPoll(u_int timeout) {
+void net::TCPpeer::sendPoll(u_int timeout) {
 #ifdef _WIN32
 	int nfds = 1;
 	fd_set writefds;
@@ -218,7 +218,7 @@ void net::TCPsocket::setNonBlocking(bool nonBlocking)
 
 
 /* NEW RECEIVE METHOD */
-int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize)
+int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 {
 	ssize_t byteRecv;
 
@@ -237,7 +237,7 @@ int net::TCPsocket::recv(char* inBuffer, uint16_t inBufSize)
 }
 
 /* SEND METHOD*/
-int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize)
+int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
 {
 	ssize_t byteSent;
 	if (!this->isBlocking())
@@ -251,7 +251,7 @@ int net::TCPsocket::send(const std::string outBuffer, uint16_t outBufSize)
 }
 
 /*  SET RECV TIMEOUT */
-void net::TCPsocket::setRecvTimeout(u_int timeout) {
+void net::TCPpeer::setRecvTimeout(u_int timeout) {
 	this->recvTimeout = timeout;
 
 	if (timeout < 0) {
@@ -263,7 +263,7 @@ void net::TCPsocket::setRecvTimeout(u_int timeout) {
 }
 
 /* SET SEND TIMEOUT */
-void net::TCPsocket::setSendTimeout(u_int timeout) {
+void net::TCPpeer::setSendTimeout(u_int timeout) {
 	this->sendTimeout = timeout;
 
 	if (timeout < 0) {
@@ -283,7 +283,7 @@ int net::TCPsocket::getLastError(void) {
 #endif
 }
 
-bool net::TCPsocket::isBlocking(void) {
+bool net::TCPpeer::isBlocking(void) {
 	/* TODO: This method will be implemented later, for now let's just return true */
 	return this->m_isBlocking;
 }

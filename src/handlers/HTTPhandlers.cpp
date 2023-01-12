@@ -244,19 +244,19 @@ http::urlParser::urlParser(std::string fullUrl)
 }
 
 
-//VOID HTTP::RECVUNTILRC(NET::TCPPEER& TCPPEER, STD::STRING& RAWREQUEST)
+//void http::recvuntilrc(net::tcppeer& tcppeer, std::string& rawrequest)
 //{
-//	STD::STRING TEMPBUF;
-//	DO {
-//		/* WILL DROP THE CLIENT'S REQUEST IF THE REQUEST DATA DOES
-//		 * NOT HAVE 2 TRAILING "RETURN CARRIAGES" */
-//		TCPPEER >> TEMPBUF;
-//		IF(TEMPBUF.EMPTY()) BREAK;
-//		RAWREQUEST += TEMPBUF;
-//		/* OH!, MAYBE IT'S "NEW LINES" INSTEAD OF "RETURN CARRIAGES"*/
-//		IF(RAWREQUEST.RFIND("\N\N") != STD::STRING::NPOS)
-//			BREAK;
-//	} WHILE(RAWREQUEST.RFIND("\R\N\R\N") == STD::STRING::NPOS);
+//	std::string tempbuf;
+//	do {
+//		/* will drop the client's request if the request data does
+//		 * not have 2 trailing "return carriages" */
+//		tcppeer >> tempbuf;
+//		if(tempbuf.empty()) break;
+//		rawrequest += tempbuf;
+//		/* oh!, maybe it's "new lines" instead of "return carriages"*/
+//		if(rawrequest.rfind("\n\n") != std::string::npos)
+//			break;
+//	} while(rawrequest.rfind("\r\n\r\n") == std::string::npos);
 //}
 
 
@@ -279,27 +279,27 @@ bool http::isAllChunk(const std::string rawResponse)
 
 
 //TODO: I forgot all about this function
-short http::recvAll(net::TCPpeer& peer, std::string& rawResponse)
-{
-    /* recv first package and check if the chunked encoding is set.
-    *  if so check if everything's been recv'd.
-    *  if not, continue recv'ing until... */
-    http::recvUntilRC(peer, rawResponse);
-
-    http::responseParser resinfo(rawResponse);
-
-    auto transHead = resinfo.headers.find("Transfer-Encoding");
-    if(transHead != resinfo.headers.end()) {
-
-    }
-	return -1; //I even forgot the return statement;
-	//That return statement is just there for me to be able to compile
-	//this func on windows.
-	/*
-	This part of the code compiled on linux but not windows without the return
-	statement. Although the function was never called.
-	*/
-}
+//short http::recvAll(net::TCPpeer& peer, std::string& rawResponse)
+//{
+//    /* recv first package and check if the chunked encoding is set.
+//    *  if so check if everything's been recv'd.
+//    *  if not, continue recv'ing until... */
+//    http::recvUntilRC(peer, rawResponse);
+//
+//    http::responseParser resinfo(rawResponse);
+//
+//    auto transHead = resinfo.headers.find("Transfer-Encoding");
+//    if(transHead != resinfo.headers.end()) {
+//
+//    }
+//	return -1; //I even forgot the return statement;
+//	//That return statement is just there for me to be able to compile
+//	//this func on windows.
+//	/*
+//	This part of the code compiled on linux but not windows without the return
+//	statement. Although the function was never called.
+//	*/
+//}
 
 
 

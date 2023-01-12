@@ -26,12 +26,16 @@ SOFTWARE.
 
 /* CONNECT TO REMOTE HOST.
 the string "remoteAddr" could be a domain name or IPv4/IPv6 address */
-int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
+net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
 {
+    struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
+    struct net::PeerInfo peerInfo;
+    peerInfo.sockfd = -1;
      std::memset(&m_hints, 0, sizeof m_hints);
      //std::memset(m_remoteAddrInfo, 0, sizeof m_remoteAddrInfo);
      m_hints.ai_family = AF_UNSPEC;
      m_hints.ai_socktype = SOCK_STREAM;
+     int m_sockfd;
 
      /* Get the remoteAddr address info.
      If "remoteAddr" is a domain name, then the struct "m_remoteAddrInfo" will be
@@ -43,7 +47,7 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
     	 std::cout << "[*] net::TCPclient::connect() --> ::getadddrinfo(): "
     			 <<::gai_strerror(gai_ret) << "; " << remoteAddr << ":"
     			 << port << '\n';
-    	 return -1;
+    	 return TCPpeer(peerInfo);
      }
 
      struct pollfd pollfds[1];
@@ -60,12 +64,12 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
           }
 
           if(m_remoteAddrPtr->ai_socktype != SOCK_STREAM) {
-               net::TCPsocket::close();
+               close(m_sockfd);
                continue;
           }
 
           if(::connect(m_sockfd, m_remoteAddrPtr->ai_addr, m_remoteAddrPtr->ai_addrlen) == -1) {
-               net::TCPsocket::close();
+               close(m_sockfd);
                continue;
           }
 
@@ -75,12 +79,12 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
      /* if "m_remoteAddrPtr" is equivalent to NULL, that implies that something went wrong */
      if(m_remoteAddrPtr == NULL){
           errno = ESOCKTNOSUPPORT;
-          return m_sockfd;
+          return TCPpeer(peerInfo);
      }
 
      /* The following lines, extract info of the remote address and store them in human readable in
      a member struct called "peerInfo". */
-     char *ipstr = new char[this->addrFamily == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
+     char *ipstr = new char[AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
      void *addr;
      switch ((int)m_remoteAddrPtr->ai_family) {
         case AF_INET:
@@ -100,14 +104,15 @@ int net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
             break;
      }
 
-     this->peerInfo.addr = ipstr;
-     this->peerInfo.port = port;
-     this->peerInfo.af = m_remoteAddrPtr->ai_family;
+     peerInfo.addr = ipstr;
+     peerInfo.port = port;
+     peerInfo.af = m_remoteAddrPtr->ai_family;
+     peerInfo.sockfd = m_sockfd;
 
      /* well, this line is obvious. */
      freeaddrinfo(m_remoteAddrInfo);
      
      /* TODO: CREATE TWO METHODS, "isValid()" and "getSocket()", and then this mothod could be turned into
      a void method. */
-     return m_sockfd;
+     return TCPpeer(peerInfo);
 }

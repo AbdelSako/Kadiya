@@ -25,6 +25,13 @@ SOFTWARE.
 #include "serverDB/httpProxy2.0.hpp"
 
 void serverDB::httpProxyServer(net::TCPpeer localPeer) {
-	HttpProxy httpProxy(&localPeer);
+	HttpSocket httpProxy(&localPeer);
+
+	net::TCPpeer client = net::TCPclient::connect("127.0.0.1", 8090);
+	std::cout << "tcpPEER RETURN value: " << client.isValid() << std::endl;
+	client.send("Hello from my client\n", 21);
+
 	httpProxy.httpRecv();
+
+
 }

@@ -32,7 +32,7 @@ namespace serverDB
 {
 	void httpProxyServer(net::TCPpeer localPeer);
 
-	class HttpProxy
+	class HttpSocket
 	{
 	private:
 		unsigned int recvBufferSize = 4000;
@@ -46,7 +46,7 @@ namespace serverDB
 
 	public:
 		/* Constructor */
-		HttpProxy(net::TCPpeer *peer) {
+		HttpSocket(net::TCPpeer *peer) {
 			this->peer = peer;
 			dataReceived = new std::string[recvBufferSize];
 			dataToSend = new std::string[sendBufferSize];
@@ -62,6 +62,7 @@ namespace serverDB
 			//memset(classBuffer, 0, classBuffersize);
 			peer->recv(this->classBuffer, this->classBuffersize);
 			this->dataReceived->append(this->classBuffer);
+
 			std::cout << *dataReceived << std::endl;
 
 		}
@@ -89,7 +90,7 @@ namespace serverDB
 		}
 
 		/* Destructor */
-		~HttpProxy(void)
+		~HttpSocket(void)
 		{
 			delete[] dataReceived;
 			delete[] dataToSend;

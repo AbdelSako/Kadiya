@@ -76,6 +76,7 @@ SOFTWARE.
 
 namespace net
 {
+
     typedef int SOCKET;
 
 	class TCPsocket
@@ -99,8 +100,9 @@ namespace net
 		struct sockaddr_in m_localSockAddr;
 		struct sockaddr_in6 m_localSockAddr6;
 
-		// Store connected peer's info in human readable
 		struct net::PeerInfo peerInfo;
+
+		// Store connected peer's info in human readable
 
 		/* Tells the object when to change its behavior:
 		** Per example, when to change the transmission buffer or
@@ -149,36 +151,22 @@ namespace net
 
 		/* This function is a callee of operator>>.
 		** Reads data from a connected host.*/
-		int read(char *inBuffer, uint16_t inBufSize, int timeout);
-
+		//int read(char *inBuffer, uint16_t inBufSize, int timeout);
 			
-
 		/* This function is a callee of operator<<.
 		** Writes data to a connected host.*/
-		int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
-
-		/*  */
-		void recvPoll(u_int timeout);
-
-		/* Send poll*/
-		void sendPoll(u_int timeout);
+		//int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
 	public:
 		/*   */
 		/* Blocking*/
 		void setNonBlocking(bool non_block);
 
-		/* RECEIVE METHOD*/
-		int recv(char* inBuffer, uint16_t inBufSize);
-
-		/* send method*/
-		int send(const std::string outBuffer, uint16_t outBufSize);
-
 		// Reads from a connected host
-		const TCPsocket& operator>> (std::string &raw_data);
+		//const TCPsocket& operator>> (std::string &raw_data);
 
 		// Writes to a connected host
-		const TCPsocket& operator<< (const std::string raw_data);
+		//const TCPsocket& operator<< (const std::string raw_data);
 
         /* Gets a flag */
 		int flags(net::flags what);
@@ -189,11 +177,6 @@ namespace net
 		/*    */
         struct net::PeerInfo getPeerInfo(void);
 
-		/* Set recv timeout*/
-		void setRecvTimeout(u_int timeout);
-
-		/*  Set send timeout */
-		void setSendTimeout(u_int timeout);
 
         /* Shuts down the socket's read, write or both functions.
         *  Arguments:
@@ -218,8 +201,6 @@ namespace net
 		bool isValid(void) const {
 			return m_sockfd != -1;
 		}
-
-		bool isBlocking(void);
 
 		/* Check for error after an operation */
 		int getLastError(void);
@@ -251,6 +232,26 @@ namespace net
 		    /* Making them inaccessible. */
 		/*	int socket(void) {}
 			int bind(const char *bindAddr, uint16_t port) {} */
+			/*  */
+		void recvPoll(u_int timeout);
+
+		/* Send poll*/
+		void sendPoll(u_int timeout);
+
+		/* Set recv timeout*/
+		void setRecvTimeout(u_int timeout);
+
+		/*  Set send timeout */
+		void setSendTimeout(u_int timeout);
+
+		/* is the socket in blocking mode */
+		bool isBlocking(void);
+	public:
+		/* RECEIVE METHOD*/
+		int recv(char* inBuffer, uint16_t inBufSize);
+
+		/* send method*/
+		int send(const std::string outBuffer, uint16_t outBufSize);
 	};
 
 };

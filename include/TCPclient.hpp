@@ -30,11 +30,9 @@ SOFTWARE.
 namespace net
 {
 	/* Not done with this class yet */
-	class TCPclient: public net::TCPsocket {
-		public:
-			TCPclient(void) : net::TCPsocket(-1) {}
-
-			int connect(const std::string remoteAddr, uint16_t port);
+	class TCPclient {
+	public:
+			static TCPpeer connect(const std::string remoteAddr, uint16_t port);
 
 	};
 };
