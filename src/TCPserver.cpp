@@ -56,36 +56,49 @@ net::TCPpeer* net::TCPserver::accept(void)
 #endif
      }
 
-     ::SOCKET remoteSockfd;
+     net::SOCKET remoteSockfd;
      socklen_t peerAddrSize;
      void *addr;
      size_t addrsize = this->addrFamily == AF_INET ?
                         INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
      char *addrstr = new char[addrsize];
-     uint32_t port;
+     uint16_t port;
      struct net::PeerInfo peerInfo;
      std::memset(&peerInfo, 0, sizeof peerInfo);
 
     switch (addrFamily) {
         case AF_INET:
+<<<<<<< HEAD
+            peerAddr = new sockaddr_in;
+            std::memset(peerAddr, 0, sizeof(sockaddr));
+            peerAddrSize = sizeof(sockaddr);
+=======
+            struct sockaddr_in peerAddr;
             std::memset(&peerAddr, 0, sizeof peerAddr);
             peerAddrSize = sizeof peerAddr;
+>>>>>>> parent of 04c3a07 (Switching computer from work to home.)
 
-            remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)&peerAddr,
+            remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr,
                                     &peerAddrSize);
-            addr = (void*)(&peerAddr->sin_addr);
-            port = ::ntohs(peerAddr->sin_port);
+            addr = (void*)(&peerAddr.sin_addr);
+            port = ::ntohs(peerAddr.sin_port);
             ::inet_ntop(AF_INET, addr, addrstr, addrsize);
+            delete peerAddr;
             break;
 
         case AF_INET6:
+<<<<<<< HEAD
+            std::memset(peerAddr6, 0, sizeof(peerAddr6));
+=======
+            struct sockaddr_in6 peerAddr6;
             std::memset(&peerAddr6, 0, sizeof peerAddr6);
+>>>>>>> parent of 04c3a07 (Switching computer from work to home.)
             peerAddrSize = sizeof peerAddr6;
 
-            remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)&peerAddr6,
+            remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr6,
                                     &peerAddrSize);
-            addr = (void*)(&peerAddr6->sin6_addr);
-            port = ::ntohs(peerAddr6->sin6_port);
+            addr = (void*)(&peerAddr6.sin6_addr);
+            port = ::ntohs(peerAddr.sin_port);
             ::inet_ntop(AF_INET6, addr, addrstr, addrsize);
             break;
         default:
@@ -182,7 +195,7 @@ void net::TCPserver::signalHandler(int signalNum)
 void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 {
 	static int threadCount = 0;
-	::SOCKET remoteSock;
+	net::SOCKET remoteSock;
 	std::string callbacksID;
 	std::thread* thr;
 
@@ -198,6 +211,8 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		try {;
 			/* Accept incoming */
 			peer = server->accept();
+			/* */
+            peer->flags(SET_WILL_CLOSE_SOCKET, 0);
 
 		} catch(net::SocketException& e) {
 			e.display();

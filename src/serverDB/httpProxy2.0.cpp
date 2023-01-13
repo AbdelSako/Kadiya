@@ -27,12 +27,11 @@ SOFTWARE.
 void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	HttpSocket httpProxy(&localPeer);
 
-	net::TCPclient *client = new net::TCPclient();
-	net::TCPpeer *peerConn= new net::TCPpeer(client->connect("127.0.0.1", 8090));
-	std::cout << "tcpPEER RETURN value: " << peerConn->isValid() << std::endl;
-	peerConn->send("Hello from my client\n", 21);
+	net::TCPpeer client = net::TCPclient::connect("127.0.0.1", 8090);
+	std::cout << "tcpPEER RETURN value: " << client.isValid() << std::endl;
+	client.send("Hello from my client\n", 21);
 
 	httpProxy.httpRecv();
 
-	delete client, peerConn;
+
 }
