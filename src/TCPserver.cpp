@@ -113,6 +113,7 @@ net::TCPpeer* net::TCPserver::accept(void)
 /* START THE SERVER */
 int net::TCPserver::startServer(size_t threadNum)
 {
+    //TODO: 
     if(threadNum == 0) return -1;
 
 	/* signal handler */
@@ -131,7 +132,7 @@ int net::TCPserver::startServer(size_t threadNum)
 
 	/* Store threads in a vector */
 	for( ; threadNum > 0; threadNum--)
-		acceptThreads.push_back(std::thread(net::TCPserverThreadCore, ptr));
+		acceptThreads.push_back(std::thread(TCPserverThreadCore, ptr));
 
 	/* Detach threads */
 	for(std::thread &acceptWorker : acceptThreads)
@@ -182,24 +183,26 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 	static int threadCount = 0;
 	net::SOCKET remoteSock;
 	std::string callbacksID;
-	std::thread* thr;
+	std::thread thr;
 
 	threadCount += 1;
 
 	net::TCPserver *server = _server.get();
 
 	net::TCPpeer *peer;
+    std::shared_ptr<net::TCPserver> ptr;
+    //ptr.reset(this);
 
 	while(true) {
+        //TODO: I need to work on this variable.
 		if(server->hasToShutdown()) return;
 
-		try {;
-			/* Accept incoming */
+		try {/* Accept incoming */
         peer = server->accept();
 
 		} catch(net::SocketException& e) {
 			e.display();
-			continue;
+			return;
 		} catch(...) {
 			std::cout << "\n[*] This behavior needs to be investigated. \n\n[*] High Priority!\n";
 			server->signalHandler(SIGTERM);
@@ -211,8 +214,8 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		}
         else {
             if (server->serverCode != nullptr) {
-                thr = new std::thread(server->serverCode, peer);
-                thr->detach();
+                thr = std::thread(server->serverCode, peer);
+                thr.detach();
             } else {
                 handleConn(*peer);
 
@@ -223,6 +226,45 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
             //delete peer;
 		}
 	}
+}
+
+/* Threaded Server */
+void net::TCPserver::startThreadedServer(uint64_t maxHost) {
+    //TODO:
+    net::SOCKET remoteSock;
+    std::string callbacksID;
+    std::thread thr;
+    net::TCPpeer* peer;
+
+    while (true) {
+        if (this->hasToShutdown())
+            return;
+
+        try {
+            peer = this ->accept();
+        }
+        catch (net::SocketException& e) {
+            e.display();
+            return;
+        }
+
+        if (!peer->isValid()) {
+            std::cout << "[*] Failed to accept connection...\n";
+            continue;
+        }
+        else {
+            if (this->serverCode != nullptr) {
+                thr = std::thread(this->serverCode, peer);
+                thr.detach();
+            }
+            else {
+                handleConn(*peer);
+
+                peer->shutdown(0);
+                peer->close();
+            }
+        }
+    }
 }
 
 void net::handleConn(net::TCPpeer &peer)
@@ -236,3 +278,4 @@ void net::TCPserver::wait(void) {
     std::unique_lock<std::mutex> lock(m);
     TCPserver::m_intSigCond.wait(lock, [] {return TCPserver::m_shutdownTCPservers; });
 }
+

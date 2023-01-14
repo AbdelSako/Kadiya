@@ -33,6 +33,7 @@ SOFTWARE.
 #include <thread>
 #include <chrono>
 
+
 namespace net
 {
 	/* net::TCPserver Class */
@@ -44,7 +45,8 @@ namespace net
 			/* server control variables */
 			static std::condition_variable m_intSigCond;
 			static bool m_shutdownTCPservers;
-			bool m_serverStarted;
+			/* This var allow us not to run the startServer method when the server is aleadry running */
+			bool m_serverStarted = false;
 
 			struct sockaddr_in* peerAddr;
 			struct sockaddr_in6* peerAddr6;
@@ -53,10 +55,11 @@ namespace net
 
 			socklen_t *peerAddrSize;
 
+			//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
+
 		public:
 			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 			** only when it value changes to "true" */
-			friend void wait(void);
 
             // Initializes the socket and binds it.
 			TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
@@ -80,17 +83,18 @@ namespace net
 			/* listen */
 			int listen(uint16_t maxHost);
 
-				/* accept */
-				net::TCPpeer* accept(void);
+			/* accept */
+			net::TCPpeer* accept(void);
 
+			/* Is*/
 			~TCPserver(void) {
 				delete peerAddrSize;
 				delete peerAddr;
 				delete peerAddr6;
-
+				delete peerInfo;
 				--serverInstances;
 				if (serverInstances == 0)
-					delete peerInfo;
+					;
 			}
 
 			/* This function can be ran right after instantiation...to start the
@@ -101,6 +105,8 @@ namespace net
             **      -1: If the server fails to start.
             **       0: Success. */
 			int startServer(size_t threadNum);
+
+			void startThreadedServer(uint64_t maxHost);
 
 			/* checks if server has started */
 			bool hasStarted(void);
@@ -119,10 +125,8 @@ namespace net
 			static void signalHandler(int signalNum);
 
 			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-			void (*serverCode)(TCPpeer*) = nullptr;
+			void (*serverCode)(TCPpeer* peer) = nullptr;
 
-			/* Checking if I  could also use a class pointer */
-			void* classServerCode;
 	};
 
 	/* */
