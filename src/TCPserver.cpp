@@ -57,48 +57,33 @@ net::TCPpeer* net::TCPserver::accept(void)
      }
 
      net::SOCKET remoteSockfd;
-     socklen_t peerAddrSize;
      void *addr;
      size_t addrsize = this->addrFamily == AF_INET ?
                         INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
      char *addrstr = new char[addrsize];
      uint16_t port;
-     struct net::PeerInfo peerInfo;
-     std::memset(&peerInfo, 0, sizeof peerInfo);
+     std::memset(peerInfo, 0, sizeof peerInfo);
 
     switch (addrFamily) {
         case AF_INET:
-<<<<<<< HEAD
-            peerAddr = new sockaddr_in;
-            std::memset(peerAddr, 0, sizeof(sockaddr));
-            peerAddrSize = sizeof(sockaddr);
-=======
-            struct sockaddr_in peerAddr;
-            std::memset(&peerAddr, 0, sizeof peerAddr);
-            peerAddrSize = sizeof peerAddr;
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
+            std::memset(this->peerAddr, 0, sizeof(sockaddr_in));
+            *peerAddrSize = sizeof(sockaddr_in);
 
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr,
-                                    &peerAddrSize);
-            addr = (void*)(&peerAddr.sin_addr);
-            port = ::ntohs(peerAddr.sin_port);
+                                    peerAddrSize);
+            addr = (void*)(&peerAddr->sin_addr);
+            port = ::ntohs(peerAddr->sin_port);
             ::inet_ntop(AF_INET, addr, addrstr, addrsize);
-            delete peerAddr;
             break;
 
         case AF_INET6:
-<<<<<<< HEAD
-            std::memset(peerAddr6, 0, sizeof(peerAddr6));
-=======
-            struct sockaddr_in6 peerAddr6;
-            std::memset(&peerAddr6, 0, sizeof peerAddr6);
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
-            peerAddrSize = sizeof peerAddr6;
+            std::memset(peerAddr6, 0, sizeof(sockaddr_in6));
+            *peerAddrSize = sizeof sockaddr_in6;
 
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr6,
-                                    &peerAddrSize);
-            addr = (void*)(&peerAddr6.sin6_addr);
-            port = ::ntohs(peerAddr.sin_port);
+                                    peerAddrSize);
+            addr = (void*)(&peerAddr6->sin6_addr);
+            port = ::ntohs(peerAddr->sin_port);
             ::inet_ntop(AF_INET6, addr, addrstr, addrsize);
             break;
         default:
@@ -116,11 +101,11 @@ net::TCPpeer* net::TCPserver::accept(void)
 
     else {
  //       net::TCPpeer *peer = new net::TCPpeer(remoteSockfd);
-        peerInfo.addr = addrstr;
-        peerInfo.port = port;
-        peerInfo.af = this->addrFamily;
-        peerInfo.sockfd = remoteSockfd;
-        net::TCPpeer *peer = new net::TCPpeer(peerInfo);
+        peerInfo->addr = addrstr;
+        peerInfo->port = port;
+        peerInfo->af = this->addrFamily;
+        peerInfo->sockfd = remoteSockfd;
+        net::TCPpeer *peer = new net::TCPpeer(*peerInfo);
         return peer;
     }
 }
@@ -210,9 +195,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 
 		try {;
 			/* Accept incoming */
-			peer = server->accept();
-			/* */
-            peer->flags(SET_WILL_CLOSE_SOCKET, 0);
+        peer = server->accept();
 
 		} catch(net::SocketException& e) {
 			e.display();
@@ -228,7 +211,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		}
         else {
             if (server->serverCode != nullptr) {
-                thr = new std::thread(server->serverCode, *peer);
+                thr = new std::thread(server->serverCode, peer);
                 thr->detach();
             } else {
                 handleConn(*peer);
@@ -237,7 +220,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
                 peer->close();
             }
 
-            delete peer;
+            //delete peer;
 		}
 	}
 }

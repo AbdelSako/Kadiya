@@ -24,14 +24,17 @@ SOFTWARE.
 
 #include "serverDB/httpProxy2.0.hpp"
 
-void serverDB::httpProxyServer(net::TCPpeer localPeer) {
-	HttpSocket httpProxy(&localPeer);
-
-	net::TCPpeer client = net::TCPclient::connect("127.0.0.1", 8090);
-	std::cout << "tcpPEER RETURN value: " << client.isValid() << std::endl;
-	client.send("Hello from my client\n", 21);
+/* Delete localPeer at the end of the code or else... you know what.*/
+void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
+	HttpSocket httpProxy(localPeer);
 
 	httpProxy.httpRecv();
 
-
+	net::TCPclient* client = new net::TCPclient();
+	net::TCPpeer *peer = new net::TCPpeer(client->connect("127.0.0.1", 8090));
+	if (peer->isValid()) {
+		peer->send("Hello from my client\n", 21);
+	}
+	delete peer;
+	delete localPeer;
 }

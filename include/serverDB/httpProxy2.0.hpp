@@ -30,7 +30,7 @@ SOFTWARE.
 
 namespace serverDB
 {
-	void httpProxyServer(net::TCPpeer localPeer);
+	void httpProxyServer(net::TCPpeer *localPeer);
 
 	class HttpSocket
 	{

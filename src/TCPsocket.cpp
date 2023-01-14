@@ -66,23 +66,25 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 	switch (addrFamily) {
 		case AF_INET:
-			std::memset(&m_localSockAddr, 0, sizeof m_localSockAddr);
-			m_localSockAddr.sin_family = addrFamily;
-			m_localSockAddr.sin_port = htons(port);
+			m_localSockAddr = new sockaddr_in;
+			std::memset(m_localSockAddr, 0, sizeof m_localSockAddr);
+			m_localSockAddr->sin_family = addrFamily;
+			m_localSockAddr->sin_port = htons(port);
 			if(bindAddr)
-				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr.sin_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr->sin_addr);
 			else
-				m_localSockAddr.sin_addr.s_addr = INADDR_ANY;
+				m_localSockAddr->sin_addr.s_addr = INADDR_ANY;
 			break;
 		case AF_INET6:
-			std::memset(&m_localSockAddr6, 0, sizeof m_localSockAddr6);
-			m_localSockAddr6.sin6_flowinfo = 0;
-			m_localSockAddr6.sin6_family = addrFamily;
-			m_localSockAddr6.sin6_port = htons(port);
+			m_localSockAddr6 = new sockaddr_in6;
+			std::memset(m_localSockAddr6, 0, sizeof m_localSockAddr6);
+			m_localSockAddr6->sin6_flowinfo = 0;
+			m_localSockAddr6->sin6_family = addrFamily;
+			m_localSockAddr6->sin6_port = htons(port);
 			if(bindAddr)
-				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6.sin6_addr);
+				inet_pton_result = ::inet_pton(addrFamily, bindAddr, &m_localSockAddr6->sin6_addr);
 			else
-				m_localSockAddr6.sin6_addr = ::in6addr_any;
+				m_localSockAddr6->sin6_addr = ::in6addr_any;
 			break;
 		default:
 			throw SocketException("net::TCPsocket::bind()",
@@ -101,7 +103,6 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 
 	switch (addrFamily) {
 	case AF_INET:
-<<<<<<< HEAD
 		this->m_sockResult = ::bind(this->m_sockfd,
 			(struct sockaddr*)m_localSockAddr, sizeof(sockaddr));
 		delete m_localSockAddr;
@@ -110,15 +111,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 		this->m_sockResult = ::bind(this->m_sockfd,
 			(struct sockaddr*)m_localSockAddr6, sizeof(sockaddr));
 		delete m_localSockAddr6;
-=======
-		this->m_sockResult = ::bind(m_sockfd,
-			(struct sockaddr *)&m_localSockAddr, sizeof m_localSockAddr);
-		break;
-	case AF_INET6:
-		this->m_sockResult = ::bind(m_sockfd,
-			(struct sockaddr *)&m_localSockAddr6, sizeof m_localSockAddr6);
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
-		break;
+
 	}
 
 	if(this->m_sockResult == -1) {
@@ -299,66 +292,6 @@ bool net::TCPpeer::isBlocking(void) {
 	return this->m_isBlocking;
 }
 
-/* flags's method will soon be removed because it's making the class complicated */
-int net::TCPsocket::flags(net::flags what)
-{
-    switch(what)
-    {
-    case GET_WILL_CLOSE_SOCKET:
-        return this->m_flags[what];
-
-    case GET_KEEP_ALIVE:
-        return this->m_flags[what];
-
-    case GET_TRANS_BUFFER:
-        return this->m_flags[what];
-
-    case GET_RECV_TIMEOUT:
-        return this->m_flags[what];
-
-    case GET_SEND_TIMEOUT:
-        return this->m_flags[what];
-
-    default:
-        return -1;
-    }
-}
-
-int net::TCPsocket::flags(net::flags what, int value)
-{
-    switch(what)
-    {
-    case SET_WILL_CLOSE_SOCKET:
-        this->m_flags[what] = value;
-        return 0;
-
-    case SET_KEEP_ALIVE:
-        if((net::TCPsocket::setKeepAlive((bool)value)) == -1)
-            return -1;
-        else
-            return 0;
-
-    case SET_TRANS_BUFFER:
-        if(this->m_flags[what] != value) {
-            if(value < 1) return -1;
-
-            this->m_flags[what] = value;
-            return 0;
-        }
-        return 0;
-
-    case SET_RECV_TIMEOUT:
-        this->m_flags[what] = value;
-        return 0;
-
-    case SET_SEND_TIMEOUT:
-        this->m_flags[what] = value;
-        return 0;
-
-    default:
-        return -1;
-    }
-}
 
 /* */
 int net::TCPsocket::shutdown(int how)
@@ -391,22 +324,22 @@ int net::TCPsocket::close(void)
 		return -1;
 }
 
-struct net::PeerInfo net::TCPsocket::getPeerInfo(void)
-{
-    return peerInfo;
-}
+//struct net::PeerInfo net::TCPpeer::getPeerInfo(void)
+//{
+//    return *peerInfo;
+//}
 
-std::string net::TCPsocket::getPeerAddr(void) {
-	return this->peerInfo.addr;
+std::string net::TCPpeer::getPeerAddr(void) {
+	return 0;
 }
-uint32_t net::TCPsocket::getPeerPort(void) {
-	return this->peerInfo.port;
+uint32_t net::TCPpeer::getPeerPort(void) {
+	return 0;
 }
 
 
 
 /* keep alive */
-int net::TCPsocket::setKeepAlive(bool keep_alive)
+int net::TCPpeer::setKeepAlive(bool keep_alive)
 {
 #ifdef _WIN32
 	const char optval = (int)keep_alive;

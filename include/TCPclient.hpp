@@ -30,9 +30,15 @@ SOFTWARE.
 namespace net
 {
 	/* Not done with this class yet */
-	class TCPclient {
+	class TCPclient :TCPsocket {
+	private:
+		struct addrinfo* m_hints;
+		struct addrinfo* m_remoteAddrInfo;
+		struct addrinfo* m_remoteAddrPtr;
+		char* ipstr;
+
+		struct PeerInfo* peerInfo;
 	public:
-<<<<<<< HEAD
 		TCPclient(void): TCPsocket() {
 			this->m_hints = new addrinfo;
 			this->m_remoteAddrInfo = new addrinfo;
@@ -42,6 +48,10 @@ namespace net
 
 		}
 		~TCPclient(void) {
+			if (this->isValid()) {
+				this->shutdown(0);
+				this->close();
+			}
 			delete this->m_hints;
 			delete this->m_remoteAddrInfo;
 			delete this->m_remoteAddrPtr;
@@ -49,10 +59,6 @@ namespace net
 			delete ipstr;
 		}
 			TCPpeer connect(const std::string remoteAddr, uint16_t port);
-=======
-			static TCPpeer connect(const std::string remoteAddr, uint16_t port);
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
-
 	};
 };
 #endif

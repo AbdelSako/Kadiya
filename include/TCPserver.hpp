@@ -46,6 +46,13 @@ namespace net
 			static bool m_shutdownTCPservers;
 			bool m_serverStarted;
 
+			struct sockaddr_in* peerAddr;
+			struct sockaddr_in6* peerAddr6;
+
+			struct net::PeerInfo* peerInfo = new net::PeerInfo;
+
+			socklen_t *peerAddrSize;
+
 		public:
 			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 			** only when it value changes to "true" */
@@ -59,14 +66,12 @@ namespace net
                 try{
                     TCPsocket::socket();
                     TCPsocket::bind(serverAddr, serverPort);
-<<<<<<< HEAD
-					/*if (this->addrFamily == AF_INET)
+					peerAddrSize = new socklen_t;
+					if (this->addrFamily == AF_INET)
 						peerAddr = new sockaddr_in;
 					else
-						peerAddr6 = new sockaddr_in6;*/
+						peerAddr6 = new sockaddr_in6;
 
-=======
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
                 } catch (SocketException& e) {
                     throw;
                 }
@@ -78,19 +83,15 @@ namespace net
 				/* accept */
 				net::TCPpeer* accept(void);
 
-<<<<<<< HEAD
-			~TCPserver(void)
-			{
+			~TCPserver(void) {
+				delete peerAddrSize;
+				delete peerAddr;
+				delete peerAddr6;
+
 				--serverInstances;
-				/* Deleting the sstruct that was initialize in the constructor */
-				/*if (this->addrFamily == AF_INET)
-					delete peerAddr;
-				else
-					delete peerAddr6;*/
+				if (serverInstances == 0)
+					delete peerInfo;
 			}
-=======
-			~TCPserver(void) { --serverInstances;}
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
 
 			/* This function can be ran right after instantiation...to start the
 			** server.
@@ -107,14 +108,18 @@ namespace net
 			/* checks is server has to shutdown */
 			bool hasToShutdown(void);
 
-			/*ait Method*/
+			/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
+			** instruct our program to block somewhere(in main() is a good idea)...the detached
+			** threads will receive a kill signal when the main() returns.
+			** net::wait() Pauses the application, allowing the detached threads to run until a
+			** SIGINT(ctrl-c) is sent to the program.*/
 			void wait(void);
 
 			/* Signal handler */
 			static void signalHandler(int signalNum);
 
 			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-			void (*serverCode)(TCPpeer) = nullptr;
+			void (*serverCode)(TCPpeer*) = nullptr;
 
 			/* Checking if I  could also use a class pointer */
 			void* classServerCode;
@@ -125,12 +130,5 @@ namespace net
 
 	/* Default connection handler */
 	void handleConn(net::TCPpeer &peer);
-
-	/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
-	** instruct our program to block somewhere(in main() is a good idea)...the detached
-	** threads will receive a kill signal when the main() returns.
-	** net::wait() Pauses the application, allowing the detached threads to run until a
-	** SIGINT(ctrl-c) is sent to the program.*/
-	void wait(void);
 };
 #endif

@@ -28,12 +28,6 @@ SOFTWARE.
 the string "remoteAddr" could be a domain name or IPv4/IPv6 address */
 net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
 {
-<<<<<<< HEAD
-    std::memset(m_hints, 0, sizeof m_hints);
-    std::memset(ipstr, 0, sizeof(INET6_ADDRSTRLEN));
-    //std::memset(this->m_remoteAddrPtr, 0, sizeof(m_remoteAddrPtr));
-    std::memset(this->m_remoteAddrInfo, 0, sizeof(m_remoteAddrInfo));
-=======
     struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
     struct net::PeerInfo peerInfo;
     peerInfo.sockfd = -1;
@@ -42,7 +36,6 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
      m_hints.ai_family = AF_UNSPEC;
      m_hints.ai_socktype = SOCK_STREAM;
      int m_sockfd;
->>>>>>> parent of 04c3a07 (Switching computer from work to home.)
 
      /* Get the remoteAddr address info.
      If "remoteAddr" is a domain name, then the struct "m_remoteAddrInfo" will be
@@ -71,12 +64,12 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
           }
 
           if(m_remoteAddrPtr->ai_socktype != SOCK_STREAM) {
-               close(m_sockfd);
+               this->close();
                continue;
           }
 
           if(::connect(m_sockfd, m_remoteAddrPtr->ai_addr, m_remoteAddrPtr->ai_addrlen) == -1) {
-               close(m_sockfd);
+               this->close();
                continue;
           }
 
