@@ -2,6 +2,7 @@
 #include "TCPclient.hpp"
 #include "serverDB/httpProxy2.0.hpp"
 
+
 int main(void)
 {
 	// Server object pointer.
@@ -16,10 +17,10 @@ int main(void)
 		** The first argument is the address family; the second is a char* of the address
 		** to bind to, zero for any address. */
 		server = new net::TCPserver(AF_INET, "127.0.0.1", 8080);
-		//echo = new net::TCPserver(AF_INET, "127.0.0.1", 9090);
+		//echo = new net::TCPserver(AF_INET, "127.0.0.1", 9000);
 
 		// Callback of server object is now pointing to the http proxy server function
-		server->serverCode = serverDB::testServer;
+		server->serverCode = serverDB::httpProxyServer;
 		//echo->serverCode = serverDB::echoServer;
 
 	}
@@ -33,7 +34,7 @@ int main(void)
 		/* returns 0 on success.
 		** Starts 15 detached threads, */
 		//echo->startServer(1);
-		server->startServer(1);
+		server->start(1);
 		
 
 		// Pauses execution until SIGINT is sent from the keyboard.
@@ -47,7 +48,7 @@ int main(void)
 	catch (net::SocketException& e) {
 		e.display();
 		delete server;
-		delete echo;
+		//delete echo;
 		return 0;
 	}
 	catch (...) {

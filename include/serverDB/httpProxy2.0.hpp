@@ -45,7 +45,7 @@ namespace serverDB
 		std::string *dataReceived;
 		std::string *dataToSend;
 		char* classBuffer;
-		bool transmissionStatus = false;
+		int transmissionStatus = 0;
 
 	public:
 		/* Constructor */
@@ -58,7 +58,7 @@ namespace serverDB
 		}
 
 		/* Get transmission status */
-		bool getTransmissionStatus(void);
+		int getTransmissionStatus(void);
 		/* Set data to send */
 		void setDataToSend(std::string data);
 
@@ -67,8 +67,10 @@ namespace serverDB
 
 		/* RECEIVE METHOD */
 		void httpRecv(void);
+		void httpRecv(std::string& data);
 
 		void httpSend(void);
+		void httpSend(const std::string& data);
 
 		/* Set receive buufer size */
 		void setRecvBufferSize(unsigned int recvBufferSize) {

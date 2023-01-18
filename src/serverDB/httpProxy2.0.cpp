@@ -32,33 +32,51 @@ std::string OK_200 = "HTTP/1.1 200 Connection Established\r\n"
 /* Delete localPeer at the end of the code or else... you know what.*/
 void serverDB::echoServer(net::TCPpeer* peer) {
 	HttpSocket http(peer);
-	while (peer->getLastError() == 0) {
-		
-		http.httpRecv();
-		http.setDataToSend(http.getDataReceived());
-		http.httpSend();
-	}
-}
-void serverDB::testServer(net::TCPpeer* localPeer) {
-	net::TCPclient* client = new net::TCPclient();
-	net::TCPpeer* remotePeer;
+	std::string data;
 	try {
-		remotePeer = new net::TCPpeer(
-			client->connect("127.0.0.1", 9090));
-	}catch (net::SocketException& e) {
+		while (true) {
+				//http.httpRecv();
+				//http.httpSend(http.getDataReceived());
+			http.httpRecv(data);
+			if (data.empty())
+				break;
+			http.httpSend(data);
+		}
+	}
+	catch (net::SocketException& e) {
+		std::cout << "[*] Error from echoServer(): ";
 		e.display();
 	}
+	catch (...) {
+		std::cout << "[*] echoServer90: Unknown error\n";
+	}
+	peer->shutdown(0);
+	peer->close();
+}
+void serverDB::testServer(net::TCPpeer* localPeer) {
+	try {
+		net::TCPclient client = net::TCPclient();
+		net::TCPpeer remotePeer = net::TCPpeer(
+			client.connect("127.0.0.1", 9000));
 
-	serverDB::HttpSocket localHttp(localPeer);
-	serverDB::HttpSocket remoteHttp(remotePeer);
-	while (localPeer->getLastError() == 0) {
-		localHttp.httpRecv();
-		std::cout << localHttp.getDataReceived() << std::endl;
-		remoteHttp.setDataToSend(localHttp.getDataReceived());
-		remoteHttp.httpSend();
-		remoteHttp.httpRecv();
-		std::cout << remoteHttp.getDataReceived() << std::endl;
-		localHttp.setDataToSend(remoteHttp.getDataReceived());
+		serverDB::HttpSocket localHttp(localPeer);
+		serverDB::HttpSocket remoteHttp(&remotePeer);
+		while (localPeer->getLastError() == 0) {
+			localHttp.httpRecv();
+			std::cout << localHttp.getDataReceived() << std::endl;
+			remoteHttp.httpSend(localHttp.getDataReceived());
+			remoteHttp.httpRecv();
+			std::cout << remoteHttp.getDataReceived() << std::endl;
+			localHttp.httpSend(remoteHttp.getDataReceived());
+			std::cout << "[*] end eend\n";
+		}
+		std::cout << "[*] I believe this instruction will not be executed\n";
+	}
+	catch (net::SocketException& e) {
+		e.display();
+	}
+	catch (...) {
+		std::cout << "[*] Unknown Error Caught.\n";
 	}
 }
 void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
@@ -84,27 +102,28 @@ void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
 	}
 
 	HttpSocket remoteHttp(&remotePeer);
-	localPeer->setNonBlocking(true);
-	remotePeer.setNonBlocking(true);
+	//localPeer->setNonBlocking(true);
+	//remotePeer.setNonBlocking(true);
 	//localPeer->setRecvTimeout(5);
 	//remotePeer.setRecvTimeout(5);
+	std::string data;
 	try {
 		while (localPeer->getLastError() == 0 && remotePeer.getLastError() == 0) {
-			localHttp.httpRecv();
+			localHttp.httpRecv(data);
+			if (data.empty())
+				break;
 			std::cout << "From Local: " << localPeer->getPeerAddr()
 				<< " " << localPeer->getPeerPort() << std::endl;
 
-			remoteHttp.setDataToSend(localHttp.getDataReceived());
-			remoteHttp.httpSend();
+			remoteHttp.httpSend(data);
 			std::cout << "To Remote: " << remotePeer.getPeerAddr()
 				<< " " << remotePeer.getPeerPort() << std::endl;
 
-			remoteHttp.httpRecv();
+			remoteHttp.httpRecv(data);
 			std::cout << "From Remote: " << remotePeer.getPeerAddr()
 				<< " " << remotePeer.getPeerPort() << std::endl;
 
-			localHttp.setDataToSend(remoteHttp.getDataReceived());
-			localHttp.httpSend();
+			localHttp.httpSend(data);
 			std::cout << "To Local: " << localPeer->getPeerAddr()
 				<< " " << localPeer->getPeerPort() << std::endl;
 
@@ -126,7 +145,7 @@ void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
 
 /* ************* */
 /* Get transmission status */
-bool serverDB::HttpSocket::getTransmissionStatus(void) {
+int serverDB::HttpSocket::getTransmissionStatus(void) {
 	return transmissionStatus;
 }
 
@@ -167,24 +186,40 @@ void serverDB::HttpSocket::httpRecv(void)
 	this->dataReceived->clear();
 	int bytes = 0;
 	int totalBytes;
-	//while (true) {
-	//	bytes = peer->recv(this->classBuffer, this->classBuffersize);
-	//	if (bytes > 0) {
-	//		std::cout << "[*] Recv Return value: " << bytes << std::endl;
-	//		//throw net::SocketException("[*] Checking httpRecv: ", peer->getLastError());
-	//		std::cout << "[+] Bytes " << bytes << std::endl;
-	//		this->dataReceived->append(this->classBuffer);
-	//		transmissionStatus = true;
-	//	}
-	//	else
-	//		break;
-	//	
-	//}
 	bytes = peer->recv(this->classBuffer, this->classBuffersize);
-	std::cout << "[*] Recv Return value: " << bytes << std::endl;
 	this->dataReceived->append(this->classBuffer);
 	transmissionStatus = true;
 
+}
+
+void serverDB::HttpSocket::httpRecv(std::string& data) {
+#ifdef _WIN32
+	int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
+#else
+	int SOCKET_TIMEOUT = EWOULDBLOCK;
+#endif
+	data.clear();
+	int bytes, totalBytes = 0;
+	this->peer->setNonBlocking(true);
+	this->peer->setRecvTimeout(1);
+	do {
+		std::memset(this->classBuffer, 0, this->classBuffersize);
+		try {
+			bytes = this->peer->recv(this->classBuffer, this->classBuffersize);
+			if (bytes > 0)
+				data.append(this->classBuffer);
+		}
+		catch (net::SocketException& e) {
+			e.display();
+			bytes = 0;
+			/* If recv didn't not timeout then an error occured. */
+			if (e.getErrorCode() != SOCKET_TIMEOUT)
+				throw;
+		}
+
+	} while (bytes > 0);
+	this->peer->setNonBlocking(false);
+	this->peer->setRecvTimeout(5);
 }
 
 void serverDB::HttpSocket::httpSend(void) {
@@ -193,11 +228,9 @@ void serverDB::HttpSocket::httpSend(void) {
 	std::memset(this->classBuffer, 0, classBuffersize);
 	this->classBuffer = (char*)this->dataToSend->data();
 	int bytes = peer->send(this->classBuffer, this->dataToSend->length());
-	if (bytes > 0) {
-		std::cout << "[+] Send Return value: " << bytes << std::endl;
-		//throw net::SocketException("[*] Checking httpSend: ", peer->getLastError());
-	}
-	else {
-		std::cout << "[*] Send failed\n";
-	}
+}
+
+void serverDB::HttpSocket::httpSend(const std::string& data) {
+	
+	int bytes = peer->send((const char*)data.data(), data.length());
 }

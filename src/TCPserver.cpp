@@ -106,7 +106,7 @@ net::TCPpeer* net::TCPserver::accept(void)
         peerInfo->port = port;
         peerInfo->af = this->addrFamily;
         peerInfo->sockfd = remoteSockfd;
-        net::TCPpeer *peer = new net::TCPpeer(*peerInfo);
+        net::TCPpeer* peer = new net::TCPpeer(*peerInfo);
         delete addrstr;
         return peer;
 

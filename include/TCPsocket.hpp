@@ -74,9 +74,9 @@ SOFTWARE.
 #include "SocketException.hpp"
 #include <iostream>
 
+
 namespace net
 {
-
     typedef int SOCKET;
 
 	class TCPsocket

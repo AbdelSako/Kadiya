@@ -232,7 +232,10 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 		this->recvPoll(this->recvTimeout);
 
 	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
+	if (byteRecv == -1)
+		this->m_sockResult = -1;
 
+	//TODO: I wonder is this method should throw an Exception.
 	if (this->getLastError() != 0) {
 		throw net::SocketException("net::TCPsocket::recv", this->getLastError());
 	}
@@ -249,8 +252,12 @@ int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
 
 	byteSent = ::send(m_sockfd, outBuffer.data(), outBufSize, 0);
 
+	if (byteSent == -1)
+		this->m_sockResult = -1;
+	//TODO: I wonder if this method should throw an Exception.
 	if (this->getLastError() != 0)
 		throw net::SocketException("net::TCPsocket::send()", this->getLastError());
+
 	return byteSent;
 }
 

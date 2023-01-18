@@ -32,33 +32,38 @@ SOFTWARE.
 namespace net
 {
 	class SocketException {
-		public:
-			SocketException(std::string call, std::string event):
-				m_call(call), m_event(event) { }
-			SocketException(std::string call, const int errval):
-				m_call(call),
-				m_errno(errval) { }
+	public:
+		SocketException(std::string call, std::string event):
+			m_call(call), m_event(event) { }
+		SocketException(std::string call, const int errval):
+			m_call(call),
+			m_errno(errval) { }
 
-			void display(void) const {
-				if (m_event.empty()) {
+		void display(void) const {
+			if (m_event.empty()) {
 #ifdef _WIN32
-					std::cout << "[*] " << m_call << ": "
-						<< m_errno << '\n';
-#else
-					std::cout << "[*] " << m_call << ": "
-						<< std::strerror(m_errno) << '\n';
-#endif
-				} else {
 				std::cout << "[*] " << m_call << ": "
-					<< m_event << '\n';
-				}
+					<< m_errno << '\n';
+#else
+				std::cout << "[*] " << m_call << ": "
+					<< std::strerror(m_errno) << '\n';
+#endif
+			} else {
+			std::cout << "[*] " << m_call << ": "
+				<< m_event << '\n';
 			}
+		}
 
-			int logError(void);
-		private:
-			std::string m_event;
-			std::string m_call;
-			int m_errno;
+		/* */
+		int getErrorCode(void) {
+			return m_errno;
+		}
+
+		int logError(void);
+	private:
+		std::string m_event;
+		std::string m_call;
+		int m_errno;
 	};
 
 	/* INcludes the default behavior, and adds features for the server*/
