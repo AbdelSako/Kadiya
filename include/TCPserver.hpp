@@ -54,6 +54,7 @@ namespace net
 			struct net::PeerInfo* peerInfo = new net::PeerInfo;
 
 			socklen_t *peerAddrSize;
+			uint32_t serverPort;
 
 			//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
 
@@ -63,7 +64,7 @@ namespace net
 
             // Initializes the socket and binds it.
 			TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
-				: net::TCPsocket(Family)
+				: net::TCPsocket(Family), serverPort(serverPort)
             {
                 ++serverInstances;
                 try{
@@ -89,8 +90,10 @@ namespace net
 			/* Is*/
 			~TCPserver(void) {
 				delete peerAddrSize;
-				delete peerAddr;
-				delete peerAddr6;
+				if (this->addrFamily == AF_INET)
+					delete peerAddr;
+				else
+					delete peerAddr6;
 				delete peerInfo;
 				--serverInstances;
 				if (serverInstances == 0)
@@ -107,6 +110,7 @@ namespace net
 			int startServer(size_t threadNum);
 
 			void startThreadedServer(uint64_t maxHost);
+			void start(uint32_t maxHost);
 
 			/* checks if server has started */
 			bool hasStarted(void);

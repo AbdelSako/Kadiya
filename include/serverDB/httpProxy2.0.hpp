@@ -31,18 +31,21 @@ SOFTWARE.
 namespace serverDB
 {
 	void httpProxyServer(net::TCPpeer *localPeer);
+	void testServer(net::TCPpeer* localpeer);
+	void echoServer(net::TCPpeer* peer);
 
 	class HttpSocket
 	{
 	private:
-		unsigned int recvBufferSize = 4000;
-		unsigned int sendBufferSize = 4000;
-		unsigned int classBuffersize = 5000;
+		unsigned int recvBufferSize = 10000;
+		unsigned int sendBufferSize = 10000;
+		unsigned int classBuffersize = 10000;
 
 		net::TCPpeer *peer;
 		std::string *dataReceived;
 		std::string *dataToSend;
 		char* classBuffer;
+		bool transmissionStatus = false;
 
 	public:
 		/* Constructor */
@@ -54,18 +57,17 @@ namespace serverDB
 
 		}
 
+		/* Get transmission status */
+		bool getTransmissionStatus(void);
+		/* Set data to send */
+		void setDataToSend(std::string data);
+
+		/* Get received data */
+		std::string getDataReceived(void);
+
 		/* RECEIVE METHOD */
-		void httpRecv(void)
-		{
-			/* Let's receive some data and look for the first double return cariage ;
-			that would be this string "\n\r\n\r" */
-			//memset(classBuffer, 0, classBuffersize);
-			peer->recv(this->classBuffer, this->classBuffersize);
-			this->dataReceived->append(this->classBuffer);
+		void httpRecv(void);
 
-			std::cout << *dataReceived << std::endl;
-
-		}
 		void httpSend(void);
 
 		/* Set receive buufer size */
@@ -74,20 +76,11 @@ namespace serverDB
 		}
 
 		/* Send buffer Size */
-		void setSendBufferSize(unsigned int sendBufferSize)
-		{
-			
-			this->sendBufferSize = sendBufferSize;
-			this->dataToSend->resize(sendBufferSize);
-		}
-		unsigned int getRecvBufferSize(void)
-		{
-			return this->recvBufferSize;
-		}
-		unsigned int getSendBufferSize(void)
-		{
-			return this->sendBufferSize;
-		}
+		void setSendBufferSize(unsigned int sendBufferSize);
+
+		/* Get and set buffer size */
+		unsigned int getRecvBufferSize(void);
+		unsigned int getSendBufferSize(void);
 
 		/* Destructor */
 		~HttpSocket(void)

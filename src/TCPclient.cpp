@@ -78,7 +78,8 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
 
      /* if "m_remoteAddrPtr" is equivalent to NULL, that implies that something went wrong */
      if(m_remoteAddrPtr == NULL){
-          errno = ESOCKTNOSUPPORT;
+          //errno = ESOCKTNOSUPPORT;
+         throw net::SocketException("[*] Connect Failed: ", this->getLastError());
           return TCPpeer(peerInfo);
      }
 

@@ -330,10 +330,10 @@ int net::TCPsocket::close(void)
 //}
 
 std::string net::TCPpeer::getPeerAddr(void) {
-	return 0;
+	return this->ipAddress;
 }
 uint32_t net::TCPpeer::getPeerPort(void) {
-	return 0;
+	return this->portNumber;
 }
 
 

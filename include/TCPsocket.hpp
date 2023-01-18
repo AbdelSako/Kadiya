@@ -91,8 +91,8 @@ namespace net
 		SOCKET m_sockfd = -1;
 		int m_sockResult;
 		bool m_isBlocking = true;
-		u_int recvTimeout = 10;
-		u_int sendTimeout = 10;
+		u_int recvTimeout = 3;
+		u_int sendTimeout = 3;
 
 		struct sockaddr_in *m_localSockAddr;
 		struct sockaddr_in6 *m_localSockAddr6;
@@ -168,7 +168,7 @@ namespace net
 	{
 	public:
 
-		TCPpeer(struct net::PeerInfo &peerInfo) {
+		TCPpeer(struct net::PeerInfo peerInfo) {
 			this->ipAddress = peerInfo.addr;
 			this->portNumber = peerInfo.port;
 			this->addressFamily = peerInfo.af;
