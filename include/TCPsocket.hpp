@@ -91,8 +91,8 @@ namespace net
 		SOCKET m_sockfd = -1;
 		int m_sockResult;
 		bool m_isBlocking = true;
-		u_int recvTimeout = 3;
-		u_int sendTimeout = 3;
+		u_int recvTimeout = 2;
+		u_int sendTimeout = 2;
 
 		struct sockaddr_in *m_localSockAddr;
 		struct sockaddr_in6 *m_localSockAddr6;
@@ -109,10 +109,13 @@ namespace net
 
 		/* Shuts down and closes the socket */
 		~TCPsocket(void) {
-			if(isValid()) {
+			/* TODO: Comment these lines because they are executed when the 
+			instruction jumps out of a function. This isn't the behavior I 
+			expected. */
+			/*if(isValid()) {
 					this->shutdown(SHUT_RDWR);
                     this->close();
-			}
+			}*/
 		}
 
 	protected:
@@ -171,16 +174,19 @@ namespace net
 		TCPpeer(struct net::PeerInfo peerInfo) {
 			this->ipAddress = peerInfo.addr;
 			this->portNumber = peerInfo.port;
-			this->addressFamily = peerInfo.af;
+			this->addrFamily = peerInfo.af;
 			this->m_sockfd = peerInfo.sockfd;
 
+		}
+
+		TCPpeer(void) {
+			this->m_sockfd = -1;
 		}
 
 
 	private:
 		std::string ipAddress;
 		uint16_t portNumber;
-		uint8_t addressFamily;
 	//	private:
 		    /* Making them inaccessible. */
 		/*	int socket(void) {}

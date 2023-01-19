@@ -30,13 +30,12 @@ std::string OK_200 = "HTTP/1.1 200 Connection Established\r\n"
 						"Host: WebProject\r\n\r\n";
 
 /* Delete localPeer at the end of the code or else... you know what.*/
-void serverDB::echoServer(net::TCPpeer* peer) {
+void serverDB::echoServer(net::TCPpeer peer) {
 	HttpSocket http(peer);
 	std::string data;
 	try {
+		//http.resizeBufferSize(10);
 		while (true) {
-				//http.httpRecv();
-				//http.httpSend(http.getDataReceived());
 			http.httpRecv(data);
 			if (data.empty())
 				break;
@@ -50,25 +49,27 @@ void serverDB::echoServer(net::TCPpeer* peer) {
 	catch (...) {
 		std::cout << "[*] echoServer90: Unknown error\n";
 	}
-	peer->shutdown(0);
-	peer->close();
+	peer.shutdown(0);
+	peer.close();
 }
-void serverDB::testServer(net::TCPpeer* localPeer) {
+void serverDB::testServer(net::TCPpeer localPeer) {
 	try {
+
+		std::string data;
 		net::TCPclient client = net::TCPclient();
 		net::TCPpeer remotePeer = net::TCPpeer(
 			client.connect("127.0.0.1", 9000));
 
 		serverDB::HttpSocket localHttp(localPeer);
-		serverDB::HttpSocket remoteHttp(&remotePeer);
-		while (localPeer->getLastError() == 0) {
-			localHttp.httpRecv();
-			std::cout << localHttp.getDataReceived() << std::endl;
-			remoteHttp.httpSend(localHttp.getDataReceived());
-			remoteHttp.httpRecv();
-			std::cout << remoteHttp.getDataReceived() << std::endl;
-			localHttp.httpSend(remoteHttp.getDataReceived());
-			std::cout << "[*] end eend\n";
+		serverDB::HttpSocket remoteHttp(remotePeer);
+		while (localPeer.getLastError() == 0) {
+			localHttp.httpRecv(data);
+			std::cout << data << std::endl;
+			remoteHttp.httpSend(data);
+			remoteHttp.httpRecv(data);
+			std::cout << data << std::endl;
+			localHttp.httpSend(data);
+			std::cout << "[*] end end\n";
 		}
 		std::cout << "[*] I believe this instruction will not be executed\n";
 	}
@@ -79,41 +80,77 @@ void serverDB::testServer(net::TCPpeer* localPeer) {
 		std::cout << "[*] Unknown Error Caught.\n";
 	}
 }
-void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
+void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	//std::signal(SIGINT, net::TCPserver::signalHandler);
 	HttpSocket localHttp(localPeer);
 	net::TCPclient* client = new net::TCPclient();
-	std::string hostname;
+	std::string hostname, url;
 	uint32_t portNumber;
+	std::string data;
 
-	localHttp.httpRecv();
-	http::requestParser recvData(localHttp.getDataReceived());
-	if (recvData.method == "CONNECT") {
+	localHttp.httpRecv(data);
+	if (data.empty()) {
+		localPeer.shutdown(0); localPeer.close();
+		return;
+	}
+
+	http::requestParser recvData(data);
+	if (recvData.method.compare("CONNECT") == 0) {
 		int pos = recvData.url_or_host.rfind(":");
 		hostname = recvData.url_or_host.substr(0,pos);
 		portNumber = std::stoi(recvData.url_or_host.substr(pos + 1));
 	}
+	else {
+		//HTTP not implemented yet.
+		std::cout << "[*] HTTP not implemented yet\n";
+		auto _host = recvData.headers.find("Host");
+		if (_host != recvData.headers.end()) {
+			hostname = _host->second; hostname.pop_back();
+			std::string::size_type n;
+			n = hostname.find(':');
+			if (n != std::string::npos) {
+				portNumber = std::stoi(hostname.substr(n + 1));
+				hostname = hostname.substr(0, n - 1);
+			}
+			else
+				portNumber = 80;
+		}
+		else {
+			url = recvData.url_or_host; url.pop_back();
+			http::urlParser uinfo(url);
 
-	net::TCPpeer remotePeer = client->connect(hostname, portNumber);
-
-	if (remotePeer.isValid()) {
-		localHttp.setDataToSend(OK_200_KEEPALIVE);
-		localHttp.httpSend();
+			hostname = uinfo.host;
+			if (uinfo.port != 0)
+				portNumber = uinfo.port;
+			else
+				portNumber = 80;
+		}
 	}
 
-	HttpSocket remoteHttp(&remotePeer);
-	//localPeer->setNonBlocking(true);
-	//remotePeer.setNonBlocking(true);
-	//localPeer->setRecvTimeout(5);
-	//remotePeer.setRecvTimeout(5);
-	std::string data;
+	net::TCPpeer remotePeer;
 	try {
-		while (localPeer->getLastError() == 0 && remotePeer.getLastError() == 0) {
+		remotePeer = client->connect(hostname, portNumber);
+	}
+	catch (net::SocketException& e) {
+		e.display();
+		localPeer.shutdown(0); localPeer.close();
+		return;
+	}
+
+	HttpSocket remoteHttp(remotePeer);
+
+	if (remotePeer.isValid()) {
+		localHttp.httpSend(OK_200_KEEPALIVE);
+	}
+	
+	try {
+		while (localPeer.getLastError() == 0 && remotePeer.getLastError() == 0) {
+
 			localHttp.httpRecv(data);
 			if (data.empty())
 				break;
-			std::cout << "From Local: " << localPeer->getPeerAddr()
-				<< " " << localPeer->getPeerPort() << std::endl;
+			std::cout << "From Local: " << localPeer.getPeerAddr()
+				<< " " << localPeer.getPeerPort() << std::endl;
 
 			remoteHttp.httpSend(data);
 			std::cout << "To Remote: " << remotePeer.getPeerAddr()
@@ -124,8 +161,8 @@ void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
 				<< " " << remotePeer.getPeerPort() << std::endl;
 
 			localHttp.httpSend(data);
-			std::cout << "To Local: " << localPeer->getPeerAddr()
-				<< " " << localPeer->getPeerPort() << std::endl;
+			std::cout << "To Local: " << localPeer.getPeerAddr()
+				<< " " << localPeer.getPeerPort() << std::endl;
 
 		}
 		std::cout << "[*] Exited the loop...\n";
@@ -136,11 +173,8 @@ void serverDB::httpProxyServer(net::TCPpeer *localPeer) {
 	catch (...) {
 		std::cout << "Unexpected error caught\n";
 	}
-
-	//net::TCPpeer *peer = new net::TCPpeer(client->connect("127.0.0.1", 8090));
-	
-	//delete peer;
-	delete localPeer;
+	remotePeer.shutdown(0); remotePeer.close();
+	localPeer.shutdown(0); localPeer.close();
 }
 
 /* ************* */
@@ -149,49 +183,14 @@ int serverDB::HttpSocket::getTransmissionStatus(void) {
 	return transmissionStatus;
 }
 
-/* Set Data to send*/
-void serverDB::HttpSocket::setDataToSend(std::string data) {
-	*this->dataToSend = data;
-}
-/* */
-std::string serverDB::HttpSocket::getDataReceived(void) {
-	return *this->dataReceived;
+/* Set Buffer Size */
+void serverDB::HttpSocket::resizeBufferSize(unsigned int bufferSize) {
+	delete this->classBuffer;
+	this->classBuffersize = bufferSize;
+	this->classBuffer = new char[bufferSize];
 }
 
-/* Get Buffer*/
-unsigned int serverDB::HttpSocket::getRecvBufferSize(void)
-{
-	return this->recvBufferSize;
-}
-
-/* Get buffer size */
-unsigned int serverDB::HttpSocket::getSendBufferSize(void)
-{
-	return this->sendBufferSize;
-}
-/* Send buffer Size */
-void serverDB::HttpSocket::setSendBufferSize(unsigned int sendBufferSize)
-{
-
-	this->sendBufferSize = sendBufferSize;
-	this->dataToSend->resize(sendBufferSize);
-}
-
-/*   */
-void serverDB::HttpSocket::httpRecv(void)
-{
-	/* Let's receive some data and look for the first double return cariage ;
-	that would be this string "\n\r\n\r" */
-	//memset(classBuffer, 0, classBuffersize);
-	this->dataReceived->clear();
-	int bytes = 0;
-	int totalBytes;
-	bytes = peer->recv(this->classBuffer, this->classBuffersize);
-	this->dataReceived->append(this->classBuffer);
-	transmissionStatus = true;
-
-}
-
+/* RECEIVE METHOD */
 void serverDB::HttpSocket::httpRecv(std::string& data) {
 #ifdef _WIN32
 	int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
@@ -200,37 +199,42 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 #endif
 	data.clear();
 	int bytes, totalBytes = 0;
-	this->peer->setNonBlocking(true);
-	this->peer->setRecvTimeout(1);
+	
+	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
+	this->peer.setRecvTimeout(0);
 	do {
 		std::memset(this->classBuffer, 0, this->classBuffersize);
 		try {
-			bytes = this->peer->recv(this->classBuffer, this->classBuffersize);
+			bytes = this->peer.recv(this->classBuffer, this->classBuffersize);
 			if (bytes > 0)
-				data.append(this->classBuffer);
+				data.append(this->classBuffer, bytes);
+
+			if (bytes > 0 && bytes == this->classBuffersize) {
+				if (this->peer.isBlocking())
+					this->peer.setNonBlocking(true);
+			}
+			else {
+				break;
+			}
 		}
 		catch (net::SocketException& e) {
+			std::cout << "[*] TIMEOUT: ";
 			e.display();
-			bytes = 0;
 			/* If recv didn't not timeout then an error occured. */
 			if (e.getErrorCode() != SOCKET_TIMEOUT)
 				throw;
+			bytes = 0;
 		}
 
 	} while (bytes > 0);
-	this->peer->setNonBlocking(false);
-	this->peer->setRecvTimeout(5);
+	if (!this->peer.isBlocking()) // if not blocking; set back to blocking.
+		this->peer.setNonBlocking(false);
+	//Set back to default.
+	this->peer.setRecvTimeout(5);
 }
 
-void serverDB::HttpSocket::httpSend(void) {
-	if (this->dataToSend->empty())
-		return;// Probably throw an exception
-	std::memset(this->classBuffer, 0, classBuffersize);
-	this->classBuffer = (char*)this->dataToSend->data();
-	int bytes = peer->send(this->classBuffer, this->dataToSend->length());
-}
-
+/* SEND METHOD*/
 void serverDB::HttpSocket::httpSend(const std::string& data) {
-	
-	int bytes = peer->send((const char*)data.data(), data.length());
+	int s = data.length();
+	int bytes = peer.send((const char*)data.data(), data.length());
 }

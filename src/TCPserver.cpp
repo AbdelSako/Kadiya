@@ -46,7 +46,7 @@ int net::TCPserver::listen(uint16_t maxHost)
 }
 
 /* ACCEPT INCOMING CONNECTION */
-net::TCPpeer* net::TCPserver::accept(void)
+net::TCPpeer net::TCPserver::accept(void)
 {
      if(!isValid()) {
           errno = EBADF;
@@ -106,7 +106,7 @@ net::TCPpeer* net::TCPserver::accept(void)
         peerInfo->port = port;
         peerInfo->af = this->addrFamily;
         peerInfo->sockfd = remoteSockfd;
-        net::TCPpeer* peer = new net::TCPpeer(*peerInfo);
+        net::TCPpeer peer = net::TCPpeer(*peerInfo);
         delete addrstr;
         return peer;
 
@@ -116,11 +116,11 @@ net::TCPpeer* net::TCPserver::accept(void)
 void net::TCPserver::start(uint32_t maxHost) {
     std::signal(SIGINT, TCPserver::signalHandler);
     this->m_serverStarted = true;
-    this->serverCode = serverDB::httpProxyServer;
-    net::TCPpeer* peer;
+    //this->serverCode = serverDB::httpProxyServer;
+    net::TCPpeer peer;
     this->listen(maxHost);
     std::cout << "[+] Server is ready to accept peers on port " << this->serverPort << std::endl;
-    while (this->isValid()) {
+    while (this->getLastError() == 0) {
         peer = this->accept();
         this->serverCode(peer);
         /* this->accept() allocated memory for TCPpeer* peer; always remember to delete it
@@ -208,7 +208,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 
 	net::TCPserver *server = _server.get();
 
-	net::TCPpeer *peer;
+	net::TCPpeer peer;
 
 	while(true) {
         //TODO: I need to work on this variable.
@@ -225,7 +225,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 			server->signalHandler(SIGTERM);
 		}
 
-		if(!peer->isValid()) {
+		if(!peer.isValid()) {
             		std::cout << "[*] Failed to accept connection...\n";
             		continue;
 		}
@@ -234,13 +234,11 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
                 thr = std::thread(server->serverCode, peer);
                 thr.detach();
             } else {
-                handleConn(*peer);
+                handleConn(peer);
 
-                peer->shutdown(0);
-                peer->close();
+                peer.shutdown(0);
+                peer.close();
             }
-
-            //delete peer;
 		}
 	}
 }
@@ -252,7 +250,7 @@ void net::TCPserver::startThreadedServer(uint64_t maxHost) {
     net::SOCKET remoteSock;
     std::string callbacksID;
     std::thread thr;
-    net::TCPpeer* peer;
+    net::TCPpeer peer;
 
     std::shared_ptr<net::TCPserver> ptr;
     ptr.reset(this);
@@ -273,7 +271,7 @@ void net::TCPserver::startThreadedServer(uint64_t maxHost) {
         }
 
         //ToDo: Remember to update the isValid()'s variable.
-        if (!peer->isValid()) {
+        if (!peer.isValid()) {
             std::cout << "[*] Failed to accept connection...\n";
             continue;
         }
@@ -283,10 +281,10 @@ void net::TCPserver::startThreadedServer(uint64_t maxHost) {
                 thr.detach();
             }
             else {
-                handleConn(*peer);
+                handleConn(peer);
 
-                peer->shutdown(0);
-                peer->close();
+                peer.shutdown(0);
+                peer.close();
             }
         }
     }

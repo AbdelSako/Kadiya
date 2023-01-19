@@ -38,100 +38,104 @@ namespace net
 {
 	/* net::TCPserver Class */
 	class TCPserver: public net::TCPsocket {
-		private:
-			/* Object's count */
-			static uint16_t serverInstances;
+	private:
+		/* Object's count */
+		static uint16_t serverInstances;
 
-			/* server control variables */
-			static std::condition_variable m_intSigCond;
-			static bool m_shutdownTCPservers;
-			/* This var allow us not to run the startServer method when the server is aleadry running */
-			bool m_serverStarted = false;
+		/* server control variables */
+		static std::condition_variable m_intSigCond;
+		static bool m_shutdownTCPservers;
+		/* This var allow us not to run the startServer method when the server is aleadry running */
+		bool m_serverStarted = false;
 
-			struct sockaddr_in* peerAddr;
-			struct sockaddr_in6* peerAddr6;
+		struct sockaddr_in* peerAddr;
+		struct sockaddr_in6* peerAddr6;
 
-			struct net::PeerInfo* peerInfo = new net::PeerInfo;
+		struct net::PeerInfo* peerInfo = new net::PeerInfo;
 
-			socklen_t *peerAddrSize;
-			uint32_t serverPort;
+		socklen_t *peerAddrSize;
+		uint32_t serverPort;
 
-			//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
+		//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
 
-		public:
-			/* Monitors net::TCPserver::m_shutdownTCPservers and returns
-			** only when it value changes to "true" */
+	public:
+		/* Monitors net::TCPserver::m_shutdownTCPservers and returns
+		** only when it value changes to "true" */
 
-            // Initializes the socket and binds it.
-			TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
-				: net::TCPsocket(Family), serverPort(serverPort)
-            {
-                ++serverInstances;
-                try{
-                    TCPsocket::socket();
-                    TCPsocket::bind(serverAddr, serverPort);
-					peerAddrSize = new socklen_t;
-					if (this->addrFamily == AF_INET)
-						peerAddr = new sockaddr_in;
-					else
-						peerAddr6 = new sockaddr_in6;
-
-                } catch (SocketException& e) {
-                    throw;
-                }
-            }
-
-			/* listen */
-			int listen(uint16_t maxHost);
-
-			/* accept */
-			net::TCPpeer* accept(void);
-
-			/* Is*/
-			~TCPserver(void) {
-				delete peerAddrSize;
+        // Initializes the socket and binds it.
+		TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
+			: net::TCPsocket(Family), serverPort(serverPort)
+        {
+            ++serverInstances;
+            try{
+                TCPsocket::socket();
+                TCPsocket::bind(serverAddr, serverPort);
+				peerAddrSize = new socklen_t;
 				if (this->addrFamily == AF_INET)
-					delete peerAddr;
+					peerAddr = new sockaddr_in;
 				else
-					delete peerAddr6;
-				delete peerInfo;
-				--serverInstances;
-				if (serverInstances == 0)
-					;
+					peerAddr6 = new sockaddr_in6;
+
+            } catch (SocketException& e) {
+                throw;
+            }
+        }
+
+		/* listen */
+		int listen(uint16_t maxHost);
+
+		/* accept */
+		net::TCPpeer accept(void);
+
+		/* Is*/
+		~TCPserver(void) {
+			delete peerAddrSize;
+			if (this->addrFamily == AF_INET)
+				delete peerAddr;
+			else
+				delete peerAddr6;
+			delete peerInfo;
+			--serverInstances;
+			if (serverInstances == 0)
+				;
+			if(isValid()) {
+				this->shutdown(SHUT_RDWR);
+				this->close();
 			}
+		}
 
-			/* This function can be ran right after instantiation...to start the
-			** server.
-			** Arguments:
-			**      threadNum: the number of detached threads to run
-			** return value:
-            **      -1: If the server fails to start.
-            **       0: Success. */
-			int startServer(size_t threadNum);
+		/* This function can be ran right after instantiation...to start the
+		** server.
+		** Arguments:
+		**      threadNum: the number of detached threads to run
+		** return value:
+        **      -1: If the server fails to start.
+        **       0: Success. */
+		int startServer(size_t threadNum);
 
-			void startThreadedServer(uint64_t maxHost);
-			void start(uint32_t maxHost);
+		void startThreadedServer(uint64_t maxHost);
+		void start(uint32_t maxHost);
 
-			/* checks if server has started */
-			bool hasStarted(void);
+		/* checks if server has started */
+		bool hasStarted(void);
 
-			/* checks is server has to shutdown */
-			bool hasToShutdown(void);
+		/* checks is server has to shutdown */
+		bool hasToShutdown(void);
 
-			/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
-			** instruct our program to block somewhere(in main() is a good idea)...the detached
-			** threads will receive a kill signal when the main() returns.
-			** net::wait() Pauses the application, allowing the detached threads to run until a
-			** SIGINT(ctrl-c) is sent to the program.*/
-			void wait(void);
+		/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
+		** instruct our program to block somewhere(in main() is a good idea)...the detached
+		** threads will receive a kill signal when the main() returns.
+		** net::wait() Pauses the application, allowing the detached threads to run until a
+		** SIGINT(ctrl-c) is sent to the program.*/
+		void wait(void);
 
-			/* Signal handler */
-			static void signalHandler(int signalNum);
+		/* Signal handler */
+		static void signalHandler(int signalNum);
 
-			/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-			void (*serverCode)(TCPpeer* peer) = nullptr;
+		/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
+		void (*serverCode)(TCPpeer peer) = nullptr;
 
-	};
+};
 
 	/* */
 	void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);

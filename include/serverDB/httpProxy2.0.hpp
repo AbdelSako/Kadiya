@@ -30,40 +30,29 @@ SOFTWARE.
 
 namespace serverDB
 {
-	void httpProxyServer(net::TCPpeer *localPeer);
-	void testServer(net::TCPpeer* localpeer);
-	void echoServer(net::TCPpeer* peer);
+	void httpProxyServer(net::TCPpeer localPeer);
+	void testServer(net::TCPpeer localpeer);
+	void echoServer(net::TCPpeer peer);
 
 	class HttpSocket
 	{
 	private:
-		unsigned int recvBufferSize = 10000;
-		unsigned int sendBufferSize = 10000;
 		unsigned int classBuffersize = 10000;
 
-		net::TCPpeer *peer;
-		std::string *dataReceived;
-		std::string *dataToSend;
+		net::TCPpeer peer;
 		char* classBuffer;
 		int transmissionStatus = 0;
 
 	public:
 		/* Constructor */
-		HttpSocket(net::TCPpeer *peer) {
+		HttpSocket(net::TCPpeer& peer) {
 			this->peer = peer;
-			dataReceived = new std::string[recvBufferSize];
-			dataToSend = new std::string[sendBufferSize];
 			classBuffer = new char[classBuffersize];
 
 		}
 
 		/* Get transmission status */
 		int getTransmissionStatus(void);
-		/* Set data to send */
-		void setDataToSend(std::string data);
-
-		/* Get received data */
-		std::string getDataReceived(void);
 
 		/* RECEIVE METHOD */
 		void httpRecv(void);
@@ -72,23 +61,12 @@ namespace serverDB
 		void httpSend(void);
 		void httpSend(const std::string& data);
 
-		/* Set receive buufer size */
-		void setRecvBufferSize(unsigned int recvBufferSize) {
-			this->recvBufferSize = recvBufferSize;
-		}
-
-		/* Send buffer Size */
-		void setSendBufferSize(unsigned int sendBufferSize);
-
-		/* Get and set buffer size */
-		unsigned int getRecvBufferSize(void);
-		unsigned int getSendBufferSize(void);
+		/* Set receive buffer size */
+		void resizeBufferSize(unsigned int bufferSize);
 
 		/* Destructor */
 		~HttpSocket(void)
 		{
-			delete[] dataReceived;
-			delete[] dataToSend;
 			delete [] classBuffer;
 		}
 	};
