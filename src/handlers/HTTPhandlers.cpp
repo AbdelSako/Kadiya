@@ -71,6 +71,21 @@ http::requestParser::requestParser
 		if(n == std::string::npos);
 
 		url_or_host = rawRequest.substr(pos, n - method.length());
+		if (this->method == "CONNECT") {
+			int pos = this->url_or_host.rfind(":");
+			this->hostname = this->url_or_host.substr(0, pos);
+			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
+		}
+		else {
+			this->url_or_host.pop_back();//removes "\n"
+			http::urlParser urlData(this->url_or_host);
+			this->hostname = urlData.host;
+			this->protocol = urlData.proto;
+			if (urlData.port != 0)
+				portNumber = urlData.port;
+			else
+				portNumber = 80;
+		}
 
 		pos = n + 1;
 		version = rawRequest.substr(pos, rc[0] - method.length() - url_or_host.length() - 1 );

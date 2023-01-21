@@ -53,6 +53,9 @@ namespace http
 		std::string method;
 		std::string url_or_host; /* used for local request, http proxy and tunneling*/
 		std::string version;
+		std::string protocol;
+		std::string hostname;
+		uint32_t portNumber;
 		std::map<std::string, std::string> headers;
 		std::string requestBody;
 	};

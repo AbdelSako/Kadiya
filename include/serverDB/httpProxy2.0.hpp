@@ -33,7 +33,6 @@ namespace serverDB
 	void httpProxyServer(net::TCPpeer localPeer);
 	void testServer(net::TCPpeer localpeer);
 	void echoServer(net::TCPpeer peer);
-
 	class HttpSocket
 	{
 	private:

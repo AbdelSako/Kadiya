@@ -94,50 +94,36 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 		return;
 	}
 
-	http::requestParser recvData(data);
-	if (recvData.method.compare("CONNECT") == 0) {
-		int pos = recvData.url_or_host.rfind(":");
-		hostname = recvData.url_or_host.substr(0,pos);
-		portNumber = std::stoi(recvData.url_or_host.substr(pos + 1));
-	}
-	else {
-		//HTTP not implemented yet.
-		std::cout << "[*] HTTP not implemented yet\n";
-		auto _host = recvData.headers.find("Host");
-		if (_host != recvData.headers.end()) {
-			hostname = _host->second; hostname.pop_back();
-			std::string::size_type n;
-			n = hostname.find(':');
-			if (n != std::string::npos) {
-				portNumber = std::stoi(hostname.substr(n + 1));
-				hostname = hostname.substr(0, n - 1);
-			}
-			else
-				portNumber = 80;
-		}
-		else {
-			url = recvData.url_or_host; url.pop_back();
-			http::urlParser uinfo(url);
-
-			hostname = uinfo.host;
-			if (uinfo.port != 0)
-				portNumber = uinfo.port;
-			else
-				portNumber = 80;
-		}
-	}
-
 	net::TCPpeer remotePeer;
+
+	http::requestParser recvData(data);
+
 	try {
-		remotePeer = client->connect(hostname, portNumber);
+		remotePeer = client->connect(recvData.hostname, recvData.portNumber);
 	}
 	catch (net::SocketException& e) {
+		std::cout << "[*] Proxy failed to connect to the remote server\n";
 		e.display();
 		localPeer.shutdown(0); localPeer.close();
 		return;
 	}
 
+	/* NOW WE CAN START SENDING AND RECEIVING DATA TO/FROM THE SERVER AND THE LOCAL CLIENT. */
 	HttpSocket remoteHttp(remotePeer);
+	try {
+		if (recvData.method.compare("CONNECT") != 0) {//IF NOT CONNECT, HANDLE HTTP
+			remoteHttp.httpSend(data);
+			remoteHttp.httpRecv(data);
+			localHttp.httpSend(data);
+			return;
+		}
+	}
+	catch (net::SocketException& e) {
+		std::cout << "[*] Proxy failed to send/recv data to/from the remote server. or to the local client.\n";
+		e.display();
+	}
+	std::cout << "[*] Can't process HTTPS... Not implemented yet.\n";
+	return;
 
 	if (remotePeer.isValid()) {
 		localHttp.httpSend(OK_200_KEEPALIVE);
