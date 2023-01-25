@@ -63,7 +63,8 @@ net::TCPpeer net::TCPserver::accept(void)
                         INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
      char *addrstr = new char[addrsize];
      uint16_t port;
-     std::memset(peerInfo, 0, sizeof peerInfo);
+     //std::memset(peerInfo, 0, sizeof peerInfo);
+     struct net::PeerInfo peerInfo;
 
     switch (addrFamily) {
         case AF_INET:
@@ -102,11 +103,11 @@ net::TCPpeer net::TCPserver::accept(void)
 
     else {
  //       net::TCPpeer *peer = new net::TCPpeer(remoteSockfd);
-        peerInfo->addr = addrstr;
-        peerInfo->port = port;
-        peerInfo->af = this->addrFamily;
-        peerInfo->sockfd = remoteSockfd;
-        net::TCPpeer peer = net::TCPpeer(*peerInfo);
+        peerInfo.addr = (addrstr);
+        peerInfo.port = port;
+        peerInfo.af = this->addrFamily;
+        peerInfo.sockfd = remoteSockfd;
+        net::TCPpeer peer = net::TCPpeer(peerInfo);
         delete addrstr;
         return peer;
 
@@ -120,9 +121,20 @@ void net::TCPserver::start(uint32_t maxHost) {
     net::TCPpeer peer;
     this->listen(maxHost);
     std::cout << "[+] Server is ready to accept peers on port " << this->serverPort << std::endl;
-    while (this->getLastError() == 0) {
-        peer = this->accept();
-        this->serverCode(peer);
+    while (true) {
+        try {
+            peer = this->accept();
+            this->serverCode(peer);
+        }
+        catch (net::SocketException& e) {
+            e.display();
+            this->close();
+        }
+        catch (...) {
+            std::cout << "[*] Failed to accept connection.\n";
+            this->close();
+            return;
+        }
         /* this->accept() allocated memory for TCPpeer* peer; always remember to delete it
         at the end of the function */
     }

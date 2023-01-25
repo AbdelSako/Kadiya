@@ -51,7 +51,7 @@ namespace net
 		struct sockaddr_in* peerAddr;
 		struct sockaddr_in6* peerAddr6;
 
-		struct net::PeerInfo* peerInfo = new net::PeerInfo;
+		//struct net::PeerInfo* peerInfo = new net::PeerInfo;
 
 		socklen_t *peerAddrSize;
 		uint32_t serverPort;
@@ -94,7 +94,7 @@ namespace net
 				delete peerAddr;
 			else
 				delete peerAddr6;
-			delete peerInfo;
+			//delete peerInfo;
 			--serverInstances;
 			if (serverInstances == 0)
 				;

@@ -112,9 +112,13 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	HttpSocket remoteHttp(remotePeer);
 	try {
 		if (recvData.method.compare("CONNECT") != 0) {//IF NOT CONNECT, HANDLE HTTP
+			
 			remoteHttp.httpSend(data);
 			remoteHttp.httpRecv(data);
 			localHttp.httpSend(data);
+
+			remotePeer.shutdown(0); remotePeer.close();
+			localPeer.shutdown(0); localPeer.close();
 			return;
 		}
 	}
@@ -123,32 +127,32 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 		e.display();
 	}
 	std::cout << "[*] Can't process HTTPS... Not implemented yet.\n";
-	return;
+	/*remotePeer.shutdown(0); remotePeer.close();
+	localPeer.shutdown(0); localPeer.close();
+	return;*/
 
 	if (remotePeer.isValid()) {
 		localHttp.httpSend(OK_200_KEEPALIVE);
 	}
+	localPeer.setNonBlocking(true);
+	localPeer.setRecvTimeout(2);
 	
 	try {
-		while (localPeer.getLastError() == 0 && remotePeer.getLastError() == 0) {
+		while (!data.empty()) {
 
 			localHttp.httpRecv(data);
 			if (data.empty())
 				break;
-			std::cout << "From Local: " << localPeer.getPeerAddr()
-				<< " " << localPeer.getPeerPort() << std::endl;
+			std::cout << "From Local: " << localPeer.getPeerAddr() << " " << localPeer.getPeerPort() << std::endl;
 
 			remoteHttp.httpSend(data);
-			std::cout << "To Remote: " << remotePeer.getPeerAddr()
-				<< " " << remotePeer.getPeerPort() << std::endl;
+			std::cout << "To Remote: " << remotePeer.getPeerAddr() << " " << remotePeer.getPeerPort() << std::endl;
 
 			remoteHttp.httpRecv(data);
-			std::cout << "From Remote: " << remotePeer.getPeerAddr()
-				<< " " << remotePeer.getPeerPort() << std::endl;
+			std::cout << "From Remote: " << remotePeer.getPeerAddr() << " " << remotePeer.getPeerPort() << std::endl;
 
 			localHttp.httpSend(data);
-			std::cout << "To Local: " << localPeer.getPeerAddr()
-				<< " " << localPeer.getPeerPort() << std::endl;
+			std::cout << "To Local: " << localPeer.getPeerAddr() << " " << localPeer.getPeerPort() << std::endl;
 
 		}
 		std::cout << "[*] Exited the loop...\n";
@@ -187,7 +191,6 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	int bytes, totalBytes = 0;
 	
 	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
-	this->peer.setRecvTimeout(0);
 	do {
 		std::memset(this->classBuffer, 0, this->classBuffersize);
 		try {
@@ -198,6 +201,7 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 			if (bytes > 0 && bytes == this->classBuffersize) {
 				if (this->peer.isBlocking())
 					this->peer.setNonBlocking(true);
+				this->peer.setRecvTimeout(0);
 			}
 			else {
 				break;

@@ -91,8 +91,8 @@ namespace net
 		SOCKET m_sockfd = -1;
 		int m_sockResult;
 		bool m_isBlocking = true;
-		u_int recvTimeout = 2;
-		u_int sendTimeout = 2;
+		u_int recvTimeout = 5;
+		u_int sendTimeout = 5;
 
 		struct sockaddr_in *m_localSockAddr;
 		struct sockaddr_in6 *m_localSockAddr6;

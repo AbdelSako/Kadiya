@@ -231,13 +231,15 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 	if (!this->isBlocking())
 		this->recvPoll(this->recvTimeout);
 
+	/* If the connection gets disconnected after ::recv(), errno will be
+	different than 0 on a linux system. */
 	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
-	if (byteRecv == -1)
+	if (byteRecv == -1) {
 		this->m_sockResult = -1;
 
-	//TODO: I wonder is this method should throw an Exception.
-	if (this->getLastError() != 0) {
-		throw net::SocketException("net::TCPsocket::recv", this->getLastError());
+		//TODO: I wonder is this method should throw an Exception.
+		if (this->getLastError() != 0)
+			throw net::SocketException("net::TCPsocket::recv", this->getLastError());
 	}
 
 	return byteRecv;
@@ -252,11 +254,12 @@ int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
 
 	byteSent = ::send(m_sockfd, outBuffer.data(), outBufSize, 0);
 
-	if (byteSent == -1)
+	if (byteSent == -1) {
 		this->m_sockResult = -1;
-	//TODO: I wonder if this method should throw an Exception.
-	if (this->getLastError() != 0)
-		throw net::SocketException("net::TCPsocket::send()", this->getLastError());
+		//TODO: I wonder if this method should throw an Exception.
+		if (this->getLastError() != 0)
+			throw net::SocketException("net::TCPsocket::send()", this->getLastError());
+	}
 
 	return byteSent;
 }
@@ -264,25 +267,11 @@ int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
 /*  SET RECV TIMEOUT */
 void net::TCPpeer::setRecvTimeout(u_int timeout) {
 	this->recvTimeout = timeout;
-
-	//if (timeout < 0) {
-	//	this->setNonBlocking(false);
-	//}
-	//else {
-	//	this->setNonBlocking(true);
-	//}
 }
 
 /* SET SEND TIMEOUT */
 void net::TCPpeer::setSendTimeout(u_int timeout) {
 	this->sendTimeout = timeout;
-
-	//if (timeout < 0) {
-	//	this->setNonBlocking(false);
-	//}
-	//else {
-	//	this->setNonBlocking(true);
-	//}
 }
 
 /* GET LAST ERROR METHOOD*/
