@@ -201,20 +201,22 @@ void net::TCPsocket::setNonBlocking(bool nonBlocking)
 	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
 	u_long iMode = (u_long)nonBlocking;
 
-	m_sockResult = ioctlsocket(this->m_sockfd, FIONBIO, &iMode);
-	if (m_sockResult != NO_ERROR)
-		throw net::SocketException("net::TCPsocket::setNonBlocking", this->getLastError());
+	if (this->isBlocking()) {
+		m_sockResult = ioctlsocket(this->m_sockfd, FIONBIO, &iMode);
+		if (m_sockResult != NO_ERROR)
+			throw net::SocketException("net::TCPsocket::setNonBlocking", this->getLastError());
+	}
 
 #else
 	const int flags = fcntl(m_sockfd, F_GETFL, 0);
 	if(flags == -1)
 		throw net::SocketException("GET TCPsocket::fcntl()", this->getLastError());
-
-	if(this->m_sockResult = fcntl(
-		m_sockfd, F_SETFL, nonBlocking ? 
-		(flags | O_NONBLOCK) : 
-		(flags & ~O_NONBLOCK) ) == -1)
-			throw net::SocketException("SET TCPsocket::fcntl()", this->getLastError());
+	if(this->isBlocking())
+		if(this->m_sockResult = fcntl(
+			m_sockfd, F_SETFL, nonBlocking ? 
+			(flags | O_NONBLOCK) : 
+			(flags & ~O_NONBLOCK) ) == -1)
+				throw net::SocketException("SET TCPsocket::fcntl()", this->getLastError());
 #endif
 	this->m_isBlocking = !nonBlocking;
 }
@@ -261,6 +263,11 @@ int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
 	return byteSent;
 }
 
+/* getSocket() method*/
+net::SOCKET net::TCPsocket::getSocket(void) {
+	return this->m_sockfd;
+}
+
 /*  SET RECV TIMEOUT */
 void net::TCPpeer::setRecvTimeout(u_int timeout) {
 	this->recvTimeout = timeout;
@@ -294,7 +301,7 @@ int net::TCPsocket::getLastError(void) {
 #endif
 }
 
-bool net::TCPpeer::isBlocking(void) {
+bool net::TCPsocket::isBlocking(void) {
 	/* TODO: This method will be implemented later, for now let's just return true */
 	return this->m_isBlocking;
 }

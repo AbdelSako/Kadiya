@@ -137,6 +137,12 @@ namespace net
 		//int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
 	public:
+		/* Get Scoket*/
+		SOCKET getSocket(void);
+
+		/* is the socket in blocking mode */
+		bool isBlocking(void);
+
 		/*   */
 		/* Blocking*/
 		void setNonBlocking(bool non_block);
@@ -204,9 +210,6 @@ namespace net
 
 		/*  Set send timeout */
 		void setSendTimeout(u_int timeout);
-
-		/* is the socket in blocking mode */
-		bool isBlocking(void);
 
 		/* enable KEEP-ALIVE */
 		int setKeepAlive(bool keep_alive);

@@ -88,6 +88,7 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	uint32_t portNumber;
 	std::string data;
 
+	/* Receive data from the local host. */
 	localHttp.httpRecv(data);
 	if (data.empty()) {
 		localPeer.shutdown(0); localPeer.close();
@@ -98,11 +99,12 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 
 	http::requestParser recvData(data);
 
+	/* Connect to the remote host. */
 	try {
 		remotePeer = client->connect(recvData.hostname, recvData.portNumber);
 	}
 	catch (net::SocketException& e) {
-		std::cout << "[*] Proxy failed to connect to the remote server\n";
+		std::cout << "[*] Proxy failed to connect to the remote server... dropping connection.\n";
 		e.display();
 		localPeer.shutdown(0); localPeer.close();
 		return;
@@ -115,15 +117,23 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 			remoteHttp.httpSend(data);
 			remoteHttp.httpRecv(data);
 			localHttp.httpSend(data);
+			std::cout << "[+] HTTP Success!\n";
 			return;
 		}
 	}
 	catch (net::SocketException& e) {
-		std::cout << "[*] Proxy failed to send/recv data to/from the remote server. or to the local client.\n";
+		std::cout << "[c1] Proxy failed to send/recv data to/from the remote server. or to the local client.\n";
 		e.display();
+		std::cout << "[c1] Dropping this connection.\n";
+		remotePeer.shutdown(0); remotePeer.close();
+		localPeer.shutdown(0); localPeer.close();
+		return;
+
 	}
+	// Comment out the next two lines to continue to HTTPS.
 	std::cout << "[*] Can't process HTTPS... Not implemented yet.\n";
 	return;
+	// Handle HTTPS
 
 	if (remotePeer.isValid()) {
 		localHttp.httpSend(OK_200_KEEPALIVE);
@@ -145,6 +155,7 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 			remoteHttp.httpRecv(data);
 			std::cout << "From Remote: " << remotePeer.getPeerAddr()
 				<< " " << remotePeer.getPeerPort() << std::endl;
+			std::cout << "Size from server: " << data.size() << std::endl;
 
 			localHttp.httpSend(data);
 			std::cout << "To Local: " << localPeer.getPeerAddr()
@@ -185,31 +196,47 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 #endif
 	data.clear();
 	int bytes, totalBytes = 0;
+	int io_res;
+	u_long value;
 	
 	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
-	this->peer.setRecvTimeout(0);
+	this->peer.setRecvTimeout(1);
 	do {
 		std::memset(this->classBuffer, 0, this->classBuffersize);
 		try {
 			bytes = this->peer.recv(this->classBuffer, this->classBuffersize);
-			if (bytes > 0)
+			if (bytes > 0) {
 				data.append(this->classBuffer, bytes);
+			}
+			//this->peer.setNonBlocking(true);
+			io_res = ::ioctl(this->peer.getSocket(), FIONREAD, &value);
+			//if (io_res == 0 && value > 0) {
+			//	this->peer.setNonBlocking(true);
+			//	continue;
+			//}
+			//else if (io_res == -1) {
+			//	//TODO: Need to work here.
+			//	std::cout << "[-] ioctl() failed from within HttpSocket::httpRecv(std::string& data)\n";
 
-			if (bytes > 0 && bytes == this->classBuffersize) {
+			//}
+
+
+			/*if (bytes > 0 && bytes == this->classBuffersize) {
 				if (this->peer.isBlocking())
 					this->peer.setNonBlocking(true);
 			}
 			else {
 				break;
-			}
+			}*/
 		}
 		catch (net::SocketException& e) {
-			std::cout << "[*] TIMEOUT: ";
+			std::cout << "[*] Something went wrong with HttpSocket::httpRecv()\n";
 			e.display();
 			/* If recv didn't not timeout then an error occured. */
-			if (e.getErrorCode() != SOCKET_TIMEOUT)
+			/*if (e.getErrorCode() != SOCKET_TIMEOUT )
 				throw;
-			bytes = 0;
+			bytes = 0;*/
+			break;
 		}
 
 	} while (bytes > 0);
