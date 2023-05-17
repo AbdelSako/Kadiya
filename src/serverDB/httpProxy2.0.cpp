@@ -208,7 +208,7 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 			if (bytes > 0) {
 				data.append(this->classBuffer, bytes);
 			}
-			this->peer.setNonBlocking(true);
+			//this->peer.setNonBlocking(true);
 			io_res = ::ioctl(this->peer.getSocket(), FIONREAD, &value);
 			//if (io_res == 0 && value > 0) {
 			//	this->peer.setNonBlocking(true);
