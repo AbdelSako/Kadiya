@@ -1,5 +1,3 @@
-
-
 # CMakeList.txt : CMake project for CMakeProject1, include source and define
 # project specific logic here.
 #
@@ -15,7 +13,6 @@ include_directories ("include")
 add_executable (mainHttpProxy  "examples/serverAPI/mainHttpProxy.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp")
 add_executable (socketServer  "examples/serverAPI/mainHttpProxy.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp")
 add_executable (mainHttpProxy2.0  "examples/serverAPI/mainHttpProxy2.0.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy2.0.cpp")
-#target_link_libraries(mainHttpProxy2.0 pthread)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET mainHttpProxy PROPERTY CXX_STANDARD 20)
