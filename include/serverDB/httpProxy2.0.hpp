@@ -36,7 +36,7 @@ namespace serverDB
 	class HttpSocket
 	{
 	private:
-		unsigned int classBuffersize = 10000;
+		unsigned int classBuffersize = 500;
 
 		net::TCPpeer peer;
 		char* classBuffer;

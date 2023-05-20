@@ -12,12 +12,15 @@ include_directories ("include")
 #target_link_libraries (httpProxy)
 add_executable (mainHttpProxy  "examples/serverAPI/mainHttpProxy.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp")
 add_executable (socketServer  "examples/serverAPI/mainHttpProxy.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy.cpp")
-add_executable (mainHttpProxy2.0  "examples/serverAPI/mainHttpProxy2.0.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy2.0.cpp")
-
+add_executable (mainHttpWinProxy2.0  "examples/serverAPI/mainHttpProxy2.0.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy2.0.cpp")
+add_executable (mainHttpLinuxProxy2.0  "examples/serverAPI/mainHttpProxy2.0.cpp" "src/TCPsocket.cpp" "src/TCPserver.cpp" "src/TCPclient.cpp" "src/handlers/HTTPhandlers.cpp" "src/serverDB/httpProxy2.0.cpp")
+target_link_libraries (mainHttpLinuxProxy2.0 -lpthread)
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET mainHttpProxy PROPERTY CXX_STANDARD 20)
   set_property(TARGET socketServer PROPERTY CXX_STANDARD 20)
-  set_property(TARGET mainHttpProxy2.0 PROPERTY CXX_STANDARD  20)
+  set_property(TARGET mainHttpWinProxy2.0 PROPERTY CXX_STANDARD  20)
+  set_property(TARGET mainHttpLinuxProxy2.0 PROPERTY CXX_STANDARD  20)
 endif()
 
 # TODO: Add tests and install targets if needed.
+ 

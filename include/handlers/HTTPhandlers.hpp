@@ -58,6 +58,8 @@ namespace http
 		uint32_t portNumber;
 		std::map<std::string, std::string> headers;
 		std::string requestBody;
+
+		bool isKeepAlive();
 	};
 
 	/* Parses a raw http response */
@@ -70,6 +72,7 @@ namespace http
 		std::string status;
 		std::map<std::string, std::string> headers;
 		std::string responseBody;
+		bool isKeepAlive();
 	};
 
 	/* Parses a url */
@@ -92,4 +95,6 @@ namespace http
 
 	void pipePeers(net::TCPpeer& from, net::TCPpeer& to);
 };
+
+bool isKeepAlive(void);
 #endif

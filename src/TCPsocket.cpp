@@ -373,5 +373,21 @@ int net::TCPpeer::setKeepAlive(bool keep_alive)
 	int res;
 
 	keep_alive ? res = 1 : res = 0;
+	this->keepAliveStatus = res;
 	return res;
+}
+
+/* Get Keep Alive Status */
+bool net::TCPpeer::isKeepAlive() {
+	return this->keepAliveStatus;
+}
+
+/* Available to read */
+int net::TCPsocket::availToRead() {
+	u_long value;
+	int reio = ::ioctl(this->m_sockfd, FIONREAD, &value);
+	if (reio == 0)
+		return value;
+	else
+		throw net::SocketException("net::TCPsocket::availToRead()", this->getLastError());
 }

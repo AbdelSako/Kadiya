@@ -87,8 +87,10 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	std::string hostname, url;
 	uint32_t portNumber;
 	std::string data;
+	int keepAliveRes;
 
 	localHttp.httpRecv(data);
+	keepAliveRes = localPeer.setKeepAlive(true);
 	if (data.empty()) {
 		localPeer.shutdown(0); localPeer.close();
 		return;
@@ -110,12 +112,24 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 
 	/* NOW WE CAN START SENDING AND RECEIVING DATA TO/FROM THE SERVER AND THE LOCAL CLIENT. */
 	HttpSocket remoteHttp(remotePeer);
+	if (recvData.isKeepAlive()) {
+		localPeer.setKeepAlive(true);
+		remotePeer.setKeepAlive(true);
+	}
+
 	try {
-		if (recvData.method.compare("CONNECT") != 0) {//IF NOT CONNECT, HANDLE HTTP
+		if (recvData.method.compare("CONNECT") != 0) {//IF NOT CONNECT method, HANDLE HTTP
 			remoteHttp.httpSend(data);
 			remoteHttp.httpRecv(data);
-			localHttp.httpSend(data);
-			return;
+			http::responseParser parsedRes(data);
+
+			if (parsedRes.isKeepAlive()) {
+				localHttp.httpSend(data);
+				int sz = remotePeer.availToRead();
+			} else
+				localHttp.httpSend(data);
+
+			return; //DONE
 		}
 	}
 	catch (net::SocketException& e) {
@@ -185,9 +199,10 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 #endif
 	data.clear();
 	int bytes, totalBytes = 0;
+	int keepAliveRes;
 	
 	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
-	this->peer.setRecvTimeout(0);
+	this->peer.setRecvTimeout(5);
 	do {
 		std::memset(this->classBuffer, 0, this->classBuffersize);
 		try {
@@ -195,13 +210,16 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 			if (bytes > 0)
 				data.append(this->classBuffer, bytes);
 
-			if (bytes > 0 && bytes == this->classBuffersize) {
+			if (this->peer.isBlocking())
+				this->peer.setNonBlocking(true);
+
+			/*if (bytes > 0 && bytes == this->classBuffersize) {
 				if (this->peer.isBlocking())
 					this->peer.setNonBlocking(true);
 			}
 			else {
 				break;
-			}
+			}*/
 		}
 		catch (net::SocketException& e) {
 			std::cout << "[*] TIMEOUT: ";
@@ -211,12 +229,14 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 				throw;
 			bytes = 0;
 		}
+		keepAliveRes = this->peer.setKeepAlive(true);
 
-	} while (bytes > 0);
+	} while (bytes != 0);
 	if (!this->peer.isBlocking()) // if not blocking; set back to blocking.
 		this->peer.setNonBlocking(false);
 	//Set back to default.
 	this->peer.setRecvTimeout(5);
+	keepAliveRes = this->peer.setKeepAlive(false);
 }
 
 /* SEND METHOD*/

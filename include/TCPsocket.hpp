@@ -163,6 +163,9 @@ namespace net
 
 		/* Check for error after an operation */
 		int getLastError(void);
+
+		/* Data available to be read */
+		int availToRead();
 };
 
 	// CLASS
@@ -187,6 +190,7 @@ namespace net
 	private:
 		std::string ipAddress;
 		uint16_t portNumber;
+		bool keepAliveStatus = false;
 	//	private:
 		    /* Making them inaccessible. */
 		/*	int socket(void) {}
@@ -210,6 +214,9 @@ namespace net
 
 		/* enable KEEP-ALIVE */
 		int setKeepAlive(bool keep_alive);
+
+		/* Get keep Alive */
+		bool isKeepAlive();
 
 		/* RECEIVE METHOD*/
 		int recv(char* inBuffer, uint16_t inBufSize);

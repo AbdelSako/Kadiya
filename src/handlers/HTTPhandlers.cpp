@@ -24,60 +24,35 @@ SOFTWARE.
 
 #include "handlers/HTTPhandlers.hpp"
 #include <algorithm>
+#include <sstream>
 
 /*Request Parser */
-http::requestParser::requestParser
-(const std::string rawRequest)
-{
-	std::string::size_type n, pos = 0, split;
-	std::vector<size_t> rc; // return carriage indexes
-	std::string delim;
-
-	if(rawRequest.empty()) return;
-
-	n = rawRequest.find("\r\n\r\n", pos);
-	if(n != std::string::npos) {
-		delim = "\r\n";
-		split = n;
-	}
-	else {
-		n = rawRequest.find("\n\n");
-		if(n != std::string::npos) {
-			delim = "\n";
-			split = n;
+http::requestParser::requestParser(std::string rawRequest) {
+		//std::cout << rawRequest << std::endl;
+		std::string::size_type pos;
+		// Search the position between the headers and the request body;
+		pos = rawRequest.find("\r\n\r\n");
+		if (pos == std::string::npos) {
+			std::cout << " Something is wrong with this HTTP request data." << std::endl;
 		}
-	}
-	/* return, if delim is empty */
-	if(delim.empty())
-		return;
 
-	while(true) {
-		n = rawRequest.find(delim, pos);
-		if(n == std::string::npos) break;
-		rc.push_back(n);
-		pos = n + 1;
-		if(rc.back() == split) break;
-	}
+		std::stringstream requestStream(rawRequest);
+		std::string header, headerValue;
 
-	/* method url/host and version */
-	if(rc.size() >= 1) {
-		pos = 0;
-		n = rawRequest.find(' ', pos);
-		if(n == std::string::npos) /* throw http::exception() */;
-		method = rawRequest.substr(pos, n);
+		requestStream >> this->method;
+		requestStream >> this->url_or_host;
+		requestStream >> this->version;
 
-		pos = n + 1;
-		n = rawRequest.find(' ', pos);
-		if(n == std::string::npos);
+		//Let's assign the request body
+		if(this->method == "POST")
+			this->requestBody = rawRequest.substr(pos + 4);
 
-		url_or_host = rawRequest.substr(pos, n - method.length());
 		if (this->method == "CONNECT") {
 			int pos = this->url_or_host.rfind(":");
 			this->hostname = this->url_or_host.substr(0, pos);
 			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
 		}
 		else {
-			this->url_or_host.pop_back();//removes "\n"
 			http::urlParser urlData(this->url_or_host);
 			this->hostname = urlData.host;
 			this->protocol = urlData.proto;
@@ -87,27 +62,109 @@ http::requestParser::requestParser
 				portNumber = 80;
 		}
 
-		pos = n + 1;
-		version = rawRequest.substr(pos, rc[0] - method.length() - url_or_host.length() - 1 );
-	}
-
-	/* All right! let's deal with headers */
-	pos = 0;
-	if(rc.size() >= 2)
-		while(true) {
-			n = rawRequest.find(':', rc[pos] + 2);
-			if(n == std::string::npos)	break;
-			if(rc.size() == pos + 1) break;
-			headers[rawRequest.substr(rc[pos] + 2, n - (rc[pos] + 2))] =
-				(std::string)rawRequest.substr(n + 2, rc[pos + 1] -1 - n);
-			++pos;
+		while (requestStream.tellg() > 0 && requestStream.tellg() < pos) {
+			requestStream >> header;
+			header.pop_back();// remove the colon
+			std::getline(requestStream, headerValue, '\r');
+			headers[header] = headerValue;
+			
 		}
-	/* body*/
-	if(split != 0)
-		if(method.compare("POST") == 0)
-			if(rawRequest.length() > split + 4)
-				requestBody = rawRequest.substr(split + 4);
 }
+
+bool http::requestParser::isKeepAlive() {
+	/* TODO: The values of headers could have more than one value separated by commas or semi-colon.
+	Therefore, it has to be handle later. */
+	if (auto search = headers.find("Connection"); search != headers.end()) {
+		if (search->second == "close")
+			return false;
+		else
+			return true;
+	}
+	else
+		return false;
+}
+//http::requestParser::requestParser
+//(const std::string rawRequest)
+//{
+//	std::string::size_type n, pos = 0, split;
+//	std::vector<size_t> rc; // return carriage indexes
+//	std::string delim;
+//
+//	if(rawRequest.empty()) return;
+//
+//	n = rawRequest.find("\r\n\r\n", pos);
+//	if(n != std::string::npos) {
+//		delim = "\r\n";
+//		split = n;
+//	}
+//	else {
+//		n = rawRequest.find("\n\n");
+//		if(n != std::string::npos) {
+//			delim = "\n";
+//			split = n;
+//		}
+//	}
+//	/* return, if delim is empty */
+//	if(delim.empty())
+//		return;
+//
+//	while(true) {
+//		n = rawRequest.find(delim, pos);
+//		if(n == std::string::npos) break;
+//		rc.push_back(n);
+//		pos = n + 1;
+//		if(rc.back() == split) break;
+//	}
+//
+//	/* method url/host and version */
+//	if(rc.size() >= 1) {
+//		pos = 0;
+//		n = rawRequest.find(' ', pos);
+//		if(n == std::string::npos) /* throw http::exception() */;
+//		method = rawRequest.substr(pos, n);
+//
+//		pos = n + 1;
+//		n = rawRequest.find(' ', pos);
+//		if(n == std::string::npos);
+//
+//		url_or_host = rawRequest.substr(pos, n - method.length());
+//		if (this->method == "CONNECT") {
+//			int pos = this->url_or_host.rfind(":");
+//			this->hostname = this->url_or_host.substr(0, pos);
+//			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
+//		}
+//		else {
+//			this->url_or_host.pop_back();//removes "\n"
+//			http::urlParser urlData(this->url_or_host);
+//			this->hostname = urlData.host;
+//			this->protocol = urlData.proto;
+//			if (urlData.port != 0)
+//				portNumber = urlData.port;
+//			else
+//				portNumber = 80;
+//		}
+//
+//		pos = n + 1;
+//		version = rawRequest.substr(pos, rc[0] - method.length() - url_or_host.length() - 1 );
+//	}
+//
+//	/* All right! let's deal with headers */
+//	pos = 0;
+//	if(rc.size() >= 2)
+//		while(true) {
+//			n = rawRequest.find(':', rc[pos] + 2);
+//			if(n == std::string::npos)	break;
+//			if(rc.size() == pos + 1) break;
+//			headers[rawRequest.substr(rc[pos] + 2, n - (rc[pos] + 2))] =
+//				(std::string)rawRequest.substr(n + 2, rc[pos + 1] -1 - n);
+//			++pos;
+//		}
+//	/* body*/
+//	if(split != 0)
+//		if(method.compare("POST") == 0)
+//			if(rawRequest.length() > split + 4)
+//				requestBody = rawRequest.substr(split + 4);
+//}
 
 /* Response Parser */
 http::responseParser::responseParser
@@ -135,11 +192,11 @@ http::responseParser::responseParser
 	if(rc.size() >= 1) {
 		pos = 0;
 		n = rawResponse.find(' ', pos);
-		if(n == std::string::npos) /*handle it */;
+		if(n == std::string::npos) /*TODO: handle it */;
 		version = rawResponse.substr(pos, n);
 		pos = n + 1;
 		n = rawResponse.find(' ', pos);
-		if(n == std::string::npos) /* handle it*/;
+		if(n == std::string::npos) /* TODO: handle it*/;
 		code = rawResponse.substr(pos, n - pos);
 		pos = n + 1;
 		status = rawResponse.substr(pos, rc[0] - n - 1);
@@ -160,6 +217,19 @@ http::responseParser::responseParser
 	if(split != 0)
 		if(rawResponse.length() > split + 4)
 			responseBody = rawResponse.substr(split + 4);
+}
+
+bool http::responseParser::isKeepAlive() {
+	/* TODO: The values of headers could have more than one value separated by commas or semi-colon.
+	Therefore, it has to be handle later. */
+	if (auto search = headers.find("Connection"); search != headers.end()) {
+		if (search->second == "close")
+			return false;
+		else
+			return true;
+	}
+	else
+		return false;
 }
 
 /* URL parser */
