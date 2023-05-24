@@ -355,6 +355,7 @@ int net::TCPpeer::setKeepAlive(bool keep_alive)
 #endif
 	if (setsockopt(m_sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
 		return -1;
+	this->setNonBlocking(true);
 
 /*
 	optval = 2;

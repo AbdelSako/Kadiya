@@ -35,13 +35,12 @@ namespace serverDB
 	void echoServer(net::TCPpeer peer);
 	class HttpSocket
 	{
-	private:
-		unsigned int classBuffersize = 500;
-
+	public:
 		net::TCPpeer peer;
+	private:
+		unsigned int classBuffersize = 512;
 		char* classBuffer;
 		int transmissionStatus = 0;
-
 	public:
 		/* Constructor */
 		HttpSocket(net::TCPpeer& peer) {
@@ -60,13 +59,25 @@ namespace serverDB
 		void httpSend(void);
 		void httpSend(const std::string& data);
 
+		static int recvAndSend(HttpSocket from, HttpSocket& to) {
+			int buffersize = 500;
+			char fromToBuffer[500];
+			int n;
+			while (from.peer.availToRead()) {
+				std::memset(fromToBuffer, 0, buffersize);
+				from.peer.recv(fromToBuffer, buffersize);
+				to.peer.send(fromToBuffer, buffersize);
+			}
+			return 0;
+		}
+
 		/* Set receive buffer size */
 		void resizeBufferSize(unsigned int bufferSize);
 
 		/* Destructor */
 		~HttpSocket(void)
 		{
-			delete [] classBuffer;
+			//delete [] classBuffer;
 		}
 	};
 
