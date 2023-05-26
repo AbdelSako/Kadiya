@@ -82,6 +82,7 @@ void serverDB::testServer(net::TCPpeer localPeer) {
 }
 void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	//std::signal(SIGINT, net::TCPserver::signalHandler);
+	net::TCPpeer remotePeer;
 	HttpSocket localHttp(localPeer);
 	net::TCPclient* client = new net::TCPclient();
 	std::string hostname, url;
@@ -89,17 +90,32 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	std::string data;
 	int keepAliveRes;
 
-	localHttp.httpRecv(data);
-	keepAliveRes = localPeer.setKeepAlive(true);
-	if (data.empty()) {
-		localPeer.shutdown(0); localPeer.close();
+	/* Check if the received data and return if it is empty. */
+	try {
+		localHttp.httpRecv(data);
+	}
+	catch (net::SocketException& e) {
+		e.display();
 		return;
 	}
 
-	net::TCPpeer remotePeer;
+	if (data.empty()) {
+		localHttp.peer.shutdown(0);
+		localHttp.peer.close();
+		return;
+	}
+	std::cout << "[+] New connection...\n";
 
+	/* Parsed the received data from local host and set keepAlive if 
+		requested by the local http client. */
 	http::requestParser reqData(data);
+	if (reqData.isKeepAlive())
+		localHttp.peer.setKeepAlive(true);
 
+
+	/* Try to Establish a connection with the remote http server.
+		Throw and exception and return if connection to the remote http server
+		fails. */
 	try {
 		remotePeer = client->connect(reqData.hostname, reqData.portNumber);
 	}
@@ -116,17 +132,28 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	try {
 		if (reqData.method.compare("CONNECT") != 0) {//IF NOT CONNECT method, HANDLE HTTP
 			remoteHttp.httpSend(data);
-			bool res = remoteHttp.peer.isBlocking();
-			remoteHttp.httpRecv(data);
 
+			remoteHttp.httpRecv(data);
 			http::responseParser resData(data);
-			if (resData.isKeepAlive()) {
-				localPeer.setKeepAlive(true);
-				remotePeer.setKeepAlive(true);
-				//localHttp.httpSend(data);
-				int ret = serverDB::HttpSocket::recvAndSend(remoteHttp, localHttp);
-			} else
-				localHttp.httpSend(data);
+			
+			localHttp.httpSend(data);
+			/* Check if the remote http server also agreed to the keepAlive request sent earlier in this code.
+				If Yes, set the remote http socket to keepAlive and now repeat the transmission between the local
+				http client and the remote http client. */
+			if (false) { //resData.isKeepAlive()) {
+				remoteHttp.peer.setKeepAlive(true);
+				int bytes;
+				int inLocal = localHttp.peer.availToRead();
+				int inRemote = remoteHttp.peer.availToRead();
+				do {
+					localHttp.httpRecv(data);
+					if (data.empty())
+						break;
+					remoteHttp.httpSend(data);
+					remoteHttp.httpRecv(data);
+					localHttp.httpSend(data);
+				} while (bytes = localHttp.peer.availToRead());
+			}
 
 			return; //DONE
 		}
@@ -135,7 +162,12 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 		std::cout << "[*] Proxy failed to send/recv data to/from the remote server. or to the local client.\n";
 		e.display();
 	}
+	int inLocal = localHttp.peer.availToRead();
+	int inRemote = remoteHttp.peer.availToRead();
 	std::cout << "[*] Can't process HTTPS... Not implemented yet.\n";
+	/* Close the connection here for now until https is implemented. */
+	localHttp.peer.shutdown(0); localHttp.peer.close();
+	remoteHttp.peer.shutdown(0); remoteHttp.peer.close();
 	return;
 
 	if (remotePeer.isValid()) {
@@ -184,9 +216,9 @@ int serverDB::HttpSocket::getTransmissionStatus(void) {
 
 /* Set Buffer Size */
 void serverDB::HttpSocket::resizeBufferSize(unsigned int bufferSize) {
-	delete this->classBuffer;
-	this->classBuffersize = bufferSize;
-	this->classBuffer = new char[bufferSize];
+	delete this->transBuffer;
+	this->transBufferSize = bufferSize;
+	this->transBuffer = new char[bufferSize];
 }
 
 /* RECEIVE METHOD */
@@ -199,8 +231,8 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	data.clear();
 	int bytes, totalBytes = 0;
 	int keepAliveRes;
-	char* buf = new char[2000];
-	std::memset(buf, 0, 2000);
+	//char* buf = new char[2000];
+	//std::memset(buf, 0, 2000);
 	
 	bool isBlocking = this->peer.isBlocking();
 	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
@@ -208,21 +240,21 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	if (this->peer.isBlocking())
 		this->peer.setNonBlocking(true);
 
-	bytes = this->peer.recv(this->classBuffer /* + totalBytes*/,
-		this->classBuffersize /* - totalBytes*/);
+	bytes = this->peer.recv(this->transBuffer /* + totalBytes*/,
+		this->transBufferSize /* - totalBytes*/);
 	if (bytes > 0)
-		data.append(this->classBuffer);
+		data.append(this->transBuffer);
 
 	do {
-		std::memset(this->classBuffer, 0, this->classBuffersize);
+		std::memset(this->transBuffer, 0, this->transBufferSize);
 		try {
 			if (!this->peer.availToRead())
 				break;
-			bytes = this->peer.recv(this->classBuffer /* + totalBytes*/,
-				this->classBuffersize /* - totalBytes*/);
+			bytes = this->peer.recv(this->transBuffer /* + totalBytes*/,
+				this->transBufferSize /* - totalBytes*/);
 			totalBytes += bytes;
 			if (bytes > 0)
-				data.append(this->classBuffer);
+				data.append(this->transBuffer);
 
 			
 		}
@@ -238,13 +270,22 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	} while (bytes != 0);
 	if (isBlocking) // if not blocking; set back to blocking.
 		this->peer.setNonBlocking(false);
+
 	//Set back to default.
-	this->peer.setRecvTimeout(5);
+	this->peer.setRecvTimeout(peer.getDefaultTimeout());
 	//keepAliveRes = this->peer.setKeepAlive(false);
 }
 
 /* SEND METHOD*/
 void serverDB::HttpSocket::httpSend(const std::string& data) {
-	int s = data.length();
-	int bytes = peer.send((const char*)data.data(), data.length());
+	int dataSize = data.length();
+	std::string::size_type pos = 0;
+	/*int bytes = peer.send((const char*)data.substr(pos, transBufferSize).data(),
+		transBufferSize);*/
+	while (pos <= dataSize) {
+		int bytes = peer.send((const char*)data.substr(pos, transBufferSize).data(),
+			transBufferSize);
+		pos += transBufferSize;
+	}
+	int h = 1;	
 }

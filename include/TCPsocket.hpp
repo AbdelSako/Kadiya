@@ -91,8 +91,6 @@ namespace net
 		SOCKET m_sockfd = -1;
 		int m_sockResult;
 		bool m_isBlocking = true;
-		u_int recvTimeout = 2;
-		u_int sendTimeout = 2;
 
 		struct sockaddr_in *m_localSockAddr;
 		struct sockaddr_in6 *m_localSockAddr6;
@@ -168,6 +166,11 @@ namespace net
 		int availToRead();
 };
 
+
+
+
+
+
 	// CLASS
 	/* net::TCPpeer takes a connected socket as an argument */
 	class TCPpeer: public TCPsocket
@@ -191,6 +194,9 @@ namespace net
 		std::string ipAddress;
 		uint16_t portNumber;
 		bool keepAliveStatus = false;
+		u_int DEFAULT_TIMEOUT = 5;
+		u_int recvTimeout = DEFAULT_TIMEOUT;
+		u_int sendTimeout = DEFAULT_TIMEOUT;
 	//	private:
 		    /* Making them inaccessible. */
 		/*	int socket(void) {}
@@ -203,11 +209,27 @@ namespace net
 
 	public:
 		struct net::PeerInfo getPeerInfo(void);
+
+		/* Get default timeout */
+		u_int getDefaultTimeout(void) {
+			return this->DEFAULT_TIMEOUT;
+			
+		}
 		/* Set recv timeout*/
 		void setRecvTimeout(u_int timeout);
 
+		/* Get recv timeout */
+		int getRecvTimeout(void) {
+			return recvTimeout;
+		}
+
 		/*  Set send timeout */
 		void setSendTimeout(u_int timeout);
+
+		/* get send timeout */
+		int getSendTimeout(void) {
+			return sendTimeout;
+		}
 
 		/* is the socket in blocking mode */
 		bool isBlocking(void);

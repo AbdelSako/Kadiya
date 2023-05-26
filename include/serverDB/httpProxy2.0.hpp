@@ -38,14 +38,14 @@ namespace serverDB
 	public:
 		net::TCPpeer peer;
 	private:
-		unsigned int classBuffersize = 512;
-		char* classBuffer;
+		unsigned int transBufferSize = 100;
+		char* transBuffer;
 		int transmissionStatus = 0;
 	public:
 		/* Constructor */
 		HttpSocket(net::TCPpeer& peer) {
 			this->peer = peer;
-			classBuffer = new char[classBuffersize];
+			transBuffer = new char[transBufferSize];
 
 		}
 
@@ -77,7 +77,7 @@ namespace serverDB
 		/* Destructor */
 		~HttpSocket(void)
 		{
-			//delete [] classBuffer;
+			delete [] transBuffer;
 		}
 	};
 

@@ -34,12 +34,14 @@ int main(void)
 		/* returns 0 on success.
 		** Starts 15 detached threads, */
 		//echo->startServer(1);
-		server->start(1);
+		server->startServer(5);
 		
 
 		// Pauses execution until SIGINT is sent from the keyboard.
 		//net::wait();
+		std::cout << "before wait...\n";
 		server->wait();
+		std::cout << "After wait...\n";
 #ifdef _WIN32
 		WSACleanup();
 #endif
@@ -47,6 +49,7 @@ int main(void)
 	}
 	catch (net::SocketException& e) {
 		e.display();
+		std::cout << "[-] An Error happened in the previous method above; and it wasn't caught\n";
 		delete server;
 		//delete echo;
 		return 0;
