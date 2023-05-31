@@ -120,7 +120,7 @@ void net::TCPserver::start(uint32_t maxHost) {
     net::TCPpeer peer;
     this->listen(maxHost);
     std::cout << "[+] Server is ready to accept peers on port " << this->serverPort << std::endl;
-    while (this->getLastError() == 0) {
+    while (true) {
         peer = this->accept();
         this->serverCode(peer);
         /* this->accept() allocated memory for TCPpeer* peer; always remember to delete it

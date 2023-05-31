@@ -107,13 +107,9 @@ namespace net
 
 		/* Shuts down and closes the socket */
 		~TCPsocket(void) {
-			/* TODO: Comment these lines because they are executed when the 
-			instruction jumps out of a function. This isn't the behavior I 
-			expected. */
-			/*if(isValid()) {
-					this->shutdown(SHUT_RDWR);
-                    this->close();
-			}*/
+			/* TODO: Don't use this destructor to close connections, use the TCPpeer 
+				child class instead. 
+				Not sure what to do with this section yet.*/
 		}
 
 	protected:
@@ -189,6 +185,14 @@ namespace net
 			this->m_sockfd = -1;
 		}
 
+		~TCPpeer(void) {
+			//this->killConn();
+			/* TODO: This desturctor is executed after the TCPserver::accept() 
+			call returns* to one of the start(start(), startServer()) methods. 
+			To make this work. I will have to make TCPserver::accept() method return 
+			a pointer type insterad of a native type. */
+		}
+
 
 	private:
 		std::string ipAddress;
@@ -251,6 +255,12 @@ namespace net
 
 		/**/
 		uint32_t getPeerPort(void);
+
+		/* Shut down and close connection */
+		void killConn(void) {
+			this->shutdown(0);
+			this->close();
+		}
 	};
 
 };

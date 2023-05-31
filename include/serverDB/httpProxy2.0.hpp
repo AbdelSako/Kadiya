@@ -38,7 +38,7 @@ namespace serverDB
 	public:
 		net::TCPpeer peer;
 	private:
-		unsigned int transBufferSize = 100;
+		unsigned int transBufferSize = 512;
 		char* transBuffer;
 		int transmissionStatus = 0;
 	public:
@@ -63,12 +63,21 @@ namespace serverDB
 			int buffersize = 500;
 			char fromToBuffer[500];
 			int n;
-			while (from.peer.availToRead()) {
+			while (n = from.peer.availToRead()) {
 				std::memset(fromToBuffer, 0, buffersize);
 				from.peer.recv(fromToBuffer, buffersize);
+				std::cout << "From: " << from.peer.getPeerAddr()
+					<< " " << from.peer.getPeerPort() << std::endl;
 				to.peer.send(fromToBuffer, buffersize);
+				std::cout << "To " << to.peer.getPeerAddr()
+					<< " " << to.peer.getPeerPort() << std::endl;
 			}
 			return 0;
+		}
+
+		/* CLEAR BUFFER */
+		void clearBuffer(void) {
+			std::memset(this->transBuffer, 0, transBufferSize);
 		}
 
 		/* Set receive buffer size */

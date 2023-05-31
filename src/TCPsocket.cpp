@@ -231,7 +231,7 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 	if (!this->isBlocking())
 		this->recvPoll(this->recvTimeout);
 
-	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize, 0);
+	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
 	if (byteRecv == -1)
 		this->m_sockResult = -1;
 
