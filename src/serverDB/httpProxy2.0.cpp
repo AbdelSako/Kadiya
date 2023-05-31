@@ -93,20 +93,27 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	std::string data;
 	int keepAliveRes;
 
+	//std::cout << "[+] New connection from%s\n";
+	std::printf("[+] New connection from %s:%d\n",
+		localHttp.peer.getPeerAddr(),
+		localHttp.peer.getPeerPort());
+
 	/* Check if the received data and return if it is empty. */
 	try {
 		localHttp.httpRecv(data);
+		if (data.empty()) {
+			std::printf("[-] No data was received from the local host %s:%d after connecting to this proxy.\n",
+				localHttp.peer.getPeerAddr(),
+				localHttp.peer.getPeerPort());
+			localHttp.peer.killConn();
+			return;
+		}
 	}
 	catch (net::SocketException& e) {
 		e.display();
-		return;
-	}
-
-	if (data.empty()) {
 		localHttp.peer.killConn();
 		return;
 	}
-	std::cout << "[+] New connection...\n";
 
 	/* Parsed the received data from local host and set keepAlive if 
 		requested by the local http client. */
@@ -122,7 +129,8 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 		remotePeer = client->connect(reqData.hostname, reqData.portNumber);
 	}
 	catch (net::SocketException& e) {
-		std::cout << "[*] Proxy failed to connect to the remote server\n";
+		std::printf("[-] Connection Failed: %s:%d --> %s:%d\n",
+			reqData.hostname, reqData.portNumber);
 		e.display();
 		localHttp.peer.killConn();
 		return;
@@ -134,15 +142,12 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 	if (reqData.method.compare("CONNECT") != 0) {//IF NOT CONNECT method, HANDLE HTTP
 		try {
 			remoteHttp.httpSend(data);
-
 			remoteHttp.httpRecv(data);
 			http::responseParser resData(data);
-			
 			localHttp.httpSend(data);
 			/* Check if the remote http server also agreed to the keepAlive request sent earlier in this code.
 				If Yes, set the remote http socket to keepAlive and now repeat the transmission between the local
 				http client and the remote http client. */
-			//if(false) {
 			if (resData.isKeepAlive()) {
 				remoteHttp.peer.setKeepAlive(true);
 				int bytes;
