@@ -237,7 +237,8 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 
 	//TODO: I wonder is this method should throw an Exception.
 	if (this->getLastError() != 0) {
-		throw net::SocketException("net::TCPsocket::recv", this->getLastError());
+		throw net::SocketException("net::TCPsocket::recv(); Port "+(std::to_string(this->getPeerPort()))
+			+"; Error: ", this->getLastError());
 	}
 
 	return byteRecv;

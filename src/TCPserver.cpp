@@ -130,6 +130,14 @@ void net::TCPserver::start(uint32_t maxHost) {
 }
 
 /* START THE SERVER */
+/* Threading starts here. 
+    This method launches threadNum amount of listeners. Threaded listener run inside
+    TCPserverThreadCore method and each listener could aceept a connection and then spawns
+    another function which will be detached from the TCPserverThreadCore method from the use of threading.
+    The spawned function would be your server function. 
+    
+    Before running the startServer() method, you first need to point the member function pointer
+    void (*server)(TCPpeer &peer) of this server object to your server code. */
 int net::TCPserver::startServer(size_t threadNum)
 {
     //TODO: 
@@ -197,6 +205,7 @@ void net::TCPserver::signalHandler(int signalNum)
 	}
 }
 
+/* This where threading of the server happens. */
 void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 {
 	static int threadCount = 0;

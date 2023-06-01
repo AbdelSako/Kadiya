@@ -41,12 +41,21 @@ namespace serverDB
 		unsigned int transBufferSize = 512;
 		char* transBuffer;
 		int transmissionStatus = 0;
+		u_int timeout = this->peer.getDefaultTimeout();
 	public:
 		/* Constructor */
 		HttpSocket(net::TCPpeer& peer) {
 			this->peer = peer;
 			transBuffer = new char[transBufferSize];
 
+		}
+
+		u_int getTimeout() {
+			return this->timeout;
+		}
+
+		void setTimeout(u_int timeout) {
+			this->timeout = timeout;
 		}
 
 		/* Get transmission status */
@@ -59,7 +68,7 @@ namespace serverDB
 		void httpSend(void);
 		void httpSend(const std::string& data);
 
-		static int recvAndSend(HttpSocket from, HttpSocket& to) {
+		int recvAndSend(HttpSocket from, HttpSocket& to) {
 			int buffersize = 500;
 			char fromToBuffer[500];
 			int n;
@@ -73,6 +82,13 @@ namespace serverDB
 					<< " " << to.peer.getPeerPort() << std::endl;
 			}
 			return 0;
+		}
+
+		static void proxyIT(HttpSocket& conn1, HttpSocket& conn2, std::string data) {
+			conn1.httpRecv(data);
+			conn2.httpSend(data);
+			conn2.httpRecv(data);
+			conn1.httpSend(data);
 		}
 
 		/* CLEAR BUFFER */
@@ -91,7 +107,6 @@ namespace serverDB
 	};
 
 	//HttpProxy::HttpProxy(net::TCPpeer &localPeer) {};
-	
 
 };
 #endif
