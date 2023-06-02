@@ -74,14 +74,17 @@ http::requestParser::requestParser(std::string rawRequest) {
 bool http::requestParser::isKeepAlive() {
 	/* TODO: The values of headers could have more than one value separated by commas or semi-colon.
 	Therefore, it has to be handle later. */
-	if (auto search = headers.find("Connection"); search != headers.end()) {
-		if (search->second == "close")
-			return false;
-		else
+	if(auto search = headers.find("Connection"); search != headers.end()) {
+		if (search->second != "close")
 			return true;
 	}
-	else
+	else if(auto search = headers.find("Proxy-Connection"); search != headers.end()) {
+		if (search->second != "close")
+			return true;
+	}
+	else {
 		return false;
+	}
 }
 //http::requestParser::requestParser
 //(const std::string rawRequest)

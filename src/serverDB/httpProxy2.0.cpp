@@ -186,7 +186,7 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 
 		int inLocal, inRemote;
 		try {
-			if (localHttp.peer.isKeepAlive()) {
+			if (reqData.isKeepAlive()) {
 				remoteHttp.peer.setKeepAlive(true);
 				localHttp.httpSend(OK_200_KEEPALIVE);
 			}
