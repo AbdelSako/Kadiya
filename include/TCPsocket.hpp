@@ -248,7 +248,7 @@ namespace net
 		int recv(char* inBuffer, uint16_t inBufSize);
 
 		/* send method*/
-		int send(const std::string outBuffer, uint16_t outBufSize);
+		int send(const char* outBuffer, uint16_t outBufSize);
 
 		/**/
 		std::string getPeerAddr(void);

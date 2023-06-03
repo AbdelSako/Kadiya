@@ -33,15 +33,17 @@ namespace serverDB
 	void httpProxyServer(net::TCPpeer localPeer);
 	void testServer(net::TCPpeer localpeer);
 	void echoServer(net::TCPpeer peer);
+
+
 	class HttpSocket
 	{
 	public:
 		net::TCPpeer peer;
 	private:
-		unsigned int transBufferSize = 512;
+		unsigned int transBufferSize = 5000;
 		char* transBuffer;
 		int transmissionStatus = 0;
-		u_int timeout = this->peer.getDefaultTimeout();
+		u_int timeout = this->peer.getDefaultTimeout() - 4;
 	public:
 		/* Constructor */
 		HttpSocket(net::TCPpeer& peer) {

@@ -232,6 +232,7 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 		this->recvPoll(this->recvTimeout);
 
 	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
+	//byteRecv = ::read(m_sockfd, inBuffer, inBufSize - 12);
 	if (byteRecv == -1)
 		this->m_sockResult = -1;
 
@@ -245,13 +246,14 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 }
 
 /* SEND METHOD*/
-int net::TCPpeer::send(const std::string outBuffer, uint16_t outBufSize)
+int net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
 {
 	ssize_t byteSent;
 	if (!this->isBlocking())
 		this->sendPoll(this->sendTimeout);
 
-	byteSent = ::send(m_sockfd, outBuffer.data(), outBufSize, 0);
+	byteSent = ::send(m_sockfd, outBuffer, outBufSize, 0);
+	//byteSent = ::write(m_sockfd, (void*)outBuffer, outBufSize);
 
 	if (byteSent == -1)
 		this->m_sockResult = -1;

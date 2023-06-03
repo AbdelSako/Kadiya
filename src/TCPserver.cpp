@@ -138,27 +138,29 @@ void net::TCPserver::start(uint32_t maxHost) {
     
     Before running the startServer() method, you first need to point the member function pointer
     void (*server)(TCPpeer &peer) of this server object to your server code. */
-int net::TCPserver::startServer(size_t threadNum)
+int net::TCPserver::startServer(size_t maxHost)
 {
     //TODO: 
-    if(threadNum == 0) return -1;
+    if(maxHost == 0) return -1;
 
 	/* signal handler */
 	std::signal(SIGINT, TCPserver::signalHandler);
 	std::signal(SIGPIPE, TCPserver::signalHandler);
 
+    u_int numOfThreadListers = NUM_OF_THREAD_LISTENER;
+
 	/* Listen */
-	net::TCPserver::listen(threadNum);
+	net::TCPserver::listen(maxHost);
 
 	std::deque<std::thread> acceptThreads;
 	std::cout << "[+] Starting TCPserver #" << serverInstances << " with "
-        << threadNum << " threads\n";
+        << maxHost << " threads\n";
 
 	std::shared_ptr<net::TCPserver> ptr;
 	ptr.reset(this);
 
 	/* Store threads in a vector */
-	for( ; threadNum > 0; threadNum--)
+	for( ; numOfThreadListers > 0; numOfThreadListers--)
 		acceptThreads.push_back(std::thread(TCPserverThreadCore, ptr));
 
 	/* Detach threads */

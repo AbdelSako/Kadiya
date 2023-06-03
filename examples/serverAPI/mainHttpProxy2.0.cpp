@@ -34,7 +34,7 @@ int main(void)
 		/* returns 0 on success.
 		** Starts 15 detached threads, */
 		//echo->startServer(1);
-		server->start(5);
+		server->startServer(50);
 		
 
 		// Pauses execution until SIGINT is sent from the keyboard.

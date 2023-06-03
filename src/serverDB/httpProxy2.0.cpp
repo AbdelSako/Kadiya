@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "serverDB/httpProxy2.0.hpp"
 std::string OK_200_KEEPALIVE = "HTTP/1.1 200 Connection Established\r\n"
-								"Host: WebProject\r\n" 
+								"Host: WebProject\r\n"
 								"Connection: keep-alive\r\n\r\n";
 std::string OK_200 = "HTTP/1.1 200 Connection Established\r\n"
 						"Host: WebProject\r\n\r\n";
@@ -197,26 +197,15 @@ void serverDB::httpProxyServer(net::TCPpeer localPeer) {
 			while (true) {
 				inLocal = localHttp.peer.availToRead();
 				inRemote = remoteHttp.peer.availToRead();
-				try {
-					serverDB::HttpSocket::proxyIT(localHttp, remoteHttp, data);
-				}
-				catch (net::SocketException& e) {
-					std::cout << "[-] HTTPS from local host: " << std::endl;
-					e.display();
-				}
 
-				try {
-					serverDB::HttpSocket::proxyIT(remoteHttp, localHttp, data);
-				}
-				catch (net::SocketException& e) {
-					std::cout << "[-] HTTPS from remote host: ";
-					e.display();
-				}
-
-				if (localHttp.peer.availToRead() || remoteHttp.peer.availToRead())
-					continue;
-				else
-					break;
+				//http::recvUntilRC(localPeer, data);
+				localHttp.httpRecv(data);
+				remoteHttp.httpSend(data);
+				std::cout << "[+] From Local -------> Remote.\n";
+				
+				remoteHttp.httpRecv(data);
+				localHttp.httpSend(data);
+				std::cout << "[+] From Remote ------> Local\n";
 
 			}
 			std::cout << "[*] Exited the loop...\n";
@@ -262,7 +251,6 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	int totalBufferSize = this->transBufferSize * 2;
 	char* totalBuffer = new char[totalBufferSize];
 	char* beginOfTotalBufferSize = totalBuffer;
-	//std::memset(buf, 0, 2000);
 	
 	bool isBlocking = this->peer.isBlocking();
 	/* Socket will not timeout unless peer.setNonBlocking(true) is executed first. */
@@ -273,7 +261,9 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 	bytes = this->peer.recv(this->transBuffer, this->transBufferSize);
 	totalBytes += bytes;
 	if (bytes > 0)
-		data.append(this->transBuffer);
+		//data += this->transBuffer;
+		//data.append(this->transBuffer);
+		data.append(this->transBuffer, bytes);
 
 	do {
 		std::memset(this->transBuffer, 0, this->transBufferSize);
@@ -285,7 +275,9 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 
 			totalBytes += bytes;
 			if (int n= std::strlen(this->transBuffer)) {
-				data.append(this->transBuffer);
+				//data += this->transBuffer;
+				//data.append(this->transBuffer);
+				data.append(this->transBuffer, bytes);
 			}
 			
 		}
@@ -312,12 +304,7 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 void serverDB::HttpSocket::httpSend(const std::string& data) {
 	int dataSize = data.length();
 	std::string::size_type pos = 0;
-	/*int bytes = peer.send((const char*)data.substr(pos, transBufferSize).data(),
-		transBufferSize);*/
-	while (pos <= dataSize) {
-		int bytes = peer.send((const char*)data.substr(pos, transBufferSize).data(),
-			transBufferSize);
-		pos += transBufferSize;
-	}
+	int bytes = peer.send((const char*)data.data(),
+		data.length());
 	int h = 1;	
 }
