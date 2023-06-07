@@ -14,6 +14,8 @@ std::string TEST_OK_200 = "HTTP/1.1 200 OK\r\n"
 "connection: closed\r\n\r\n"
 "<html><body><h1>Hello, World!</h1></body></html>\r\n\r\n";
 
+std::string configFile("C:\\Users\\sakabdel\\source\\repos\\SOCKNET_API\\httpServerConfig.cfg");
+
 static class HttpServerConfig {
 private:
 	std::string Document_Root;

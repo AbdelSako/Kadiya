@@ -1,11 +1,12 @@
 #define __httpConfig
 #include "serverDB/httpServer.hpp"
 
-std::string configFileName = "C:\\Users\\sakabdel\\httpServerConfig.cfg";
-std::ifstream configFile(configFileName);
+//std::string configFileName = "C:\\Users\\sakabdel\\httpServerConfig.cfg";
+//std::string configFileName = ".\\httpServerConfig.cfg";
+std::ifstream configStream(configFile);
 
 
-HttpServerConfig httpServerConfig(configFile);
+HttpServerConfig httpServerConfig(configStream);
 
 void serverDB::httpServer(net::TCPpeer peer) {
 	int inStatus, outStatus;
