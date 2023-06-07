@@ -28,7 +28,6 @@ SOFTWARE.
 #include <cerrno>
 #include <iostream>
 
-
 namespace net
 {
 	class SocketException {

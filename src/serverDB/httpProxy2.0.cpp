@@ -239,11 +239,11 @@ void serverDB::HttpSocket::resizeBufferSize(unsigned int bufferSize) {
 
 /* RECEIVE METHOD */
 void serverDB::HttpSocket::httpRecv(std::string& data) {
-#ifdef _WIN32
-	int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
-#else
-	int SOCKET_TIMEOUT = EWOULDBLOCK;
-#endif
+//#ifdef _WIN32
+//	int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
+//#else
+//	int SOCKET_TIMEOUT = EWOULDBLOCK;
+//#endif
 	data.clear();
 	int bytes, totalBytes = 0;
 	int keepAliveRes;

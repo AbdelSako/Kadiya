@@ -234,13 +234,14 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
 	//byteRecv = ::read(m_sockfd, inBuffer, inBufSize - 12);
 	if (byteRecv == -1)
-		this->m_sockResult = -1;
+		//this->m_sockResult = -1;
+		this->setStatus(this->getLastError());
 
 	//TODO: I wonder is this method should throw an Exception.
-	if (this->getLastError() != 0) {
+	/*if (this->getLastError() != 0) {
 		throw net::SocketException("net::TCPsocket::recv(); Port "+(std::to_string(this->getPeerPort()))
 			+"; Error: ", this->getLastError());
-	}
+	}*/
 
 	return byteRecv;
 }
@@ -256,10 +257,12 @@ int net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
 	//byteSent = ::write(m_sockfd, (void*)outBuffer, outBufSize);
 
 	if (byteSent == -1)
-		this->m_sockResult = -1;
+		//this->m_sockResult = -1;
+		this->setStatus(this->getLastError());
+
 	//TODO: I wonder if this method should throw an Exception.
-	if (this->getLastError() != 0)
-		throw net::SocketException("net::TCPsocket::send()", this->getLastError());
+	/*if (this->getLastError() != 0)
+		throw net::SocketException("net::TCPsocket::send()", this->getLastError());*/
 
 	return byteSent;
 }
@@ -267,25 +270,11 @@ int net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
 /*  SET RECV TIMEOUT */
 void net::TCPpeer::setRecvTimeout(u_int timeout) {
 	this->recvTimeout = timeout;
-
-	//if (timeout < 0) {
-	//	this->setNonBlocking(false);
-	//}
-	//else {
-	//	this->setNonBlocking(true);
-	//}
 }
 
 /* SET SEND TIMEOUT */
 void net::TCPpeer::setSendTimeout(u_int timeout) {
 	this->sendTimeout = timeout;
-
-	//if (timeout < 0) {
-	//	this->setNonBlocking(false);
-	//}
-	//else {
-	//	this->setNonBlocking(true);
-	//}
 }
 
 /* GET LAST ERROR METHOOD*/
@@ -394,4 +383,12 @@ int net::TCPsocket::availToRead() {
 		return value;
 	else
 		throw net::SocketException("net::TCPsocket::availToRead()", this->getLastError());
+}
+
+int net::TCPsocket::getStatus(void) {
+	return status;
+}
+
+void net::TCPsocket::setStatus(int status) {
+	this->status = status;
 }

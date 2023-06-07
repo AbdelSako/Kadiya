@@ -26,7 +26,7 @@ SOFTWARE.
 #define __httpProxy
 
 #include "TCPclient.hpp"
-#include "handlers/HTTPhandlers.hpp"
+#include "handlers/http.hpp"
 
 namespace serverDB
 {

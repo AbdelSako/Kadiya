@@ -74,7 +74,6 @@ SOFTWARE.
 #include "SocketException.hpp"
 #include <iostream>
 
-
 namespace net
 {
     typedef int SOCKET;
@@ -94,6 +93,9 @@ namespace net
 
 		struct sockaddr_in *m_localSockAddr;
 		struct sockaddr_in6 *m_localSockAddr6;
+
+		/* Hold error code of the most recent operation. */
+		int status;
 
 
 	public:
@@ -160,6 +162,12 @@ namespace net
 
 		/* Data available to be read */
 		int availToRead();
+
+		/* Get Socket Status. */
+		int getStatus(void);
+	protected:
+		void setStatus(int status);
+	public:
 };
 
 

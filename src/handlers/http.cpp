@@ -22,7 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "handlers/HTTPhandlers.hpp"
+#include "handlers/http.hpp"
+#include "socketError.hpp"
 #include <algorithm>
 #include <sstream>
 
@@ -86,88 +87,7 @@ bool http::requestParser::isKeepAlive() {
 		return false;
 	}
 }
-//http::requestParser::requestParser
-//(const std::string rawRequest)
-//{
-//	std::string::size_type n, pos = 0, split;
-//	std::vector<size_t> rc; // return carriage indexes
-//	std::string delim;
-//
-//	if(rawRequest.empty()) return;
-//
-//	n = rawRequest.find("\r\n\r\n", pos);
-//	if(n != std::string::npos) {
-//		delim = "\r\n";
-//		split = n;
-//	}
-//	else {
-//		n = rawRequest.find("\n\n");
-//		if(n != std::string::npos) {
-//			delim = "\n";
-//			split = n;
-//		}
-//	}
-//	/* return, if delim is empty */
-//	if(delim.empty())
-//		return;
-//
-//	while(true) {
-//		n = rawRequest.find(delim, pos);
-//		if(n == std::string::npos) break;
-//		rc.push_back(n);
-//		pos = n + 1;
-//		if(rc.back() == split) break;
-//	}
-//
-//	/* method url/host and version */
-//	if(rc.size() >= 1) {
-//		pos = 0;
-//		n = rawRequest.find(' ', pos);
-//		if(n == std::string::npos) /* throw http::exception() */;
-//		method = rawRequest.substr(pos, n);
-//
-//		pos = n + 1;
-//		n = rawRequest.find(' ', pos);
-//		if(n == std::string::npos);
-//
-//		url_or_host = rawRequest.substr(pos, n - method.length());
-//		if (this->method == "CONNECT") {
-//			int pos = this->url_or_host.rfind(":");
-//			this->hostname = this->url_or_host.substr(0, pos);
-//			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
-//		}
-//		else {
-//			this->url_or_host.pop_back();//removes "\n"
-//			http::urlParser urlData(this->url_or_host);
-//			this->hostname = urlData.host;
-//			this->protocol = urlData.proto;
-//			if (urlData.port != 0)
-//				portNumber = urlData.port;
-//			else
-//				portNumber = 80;
-//		}
-//
-//		pos = n + 1;
-//		version = rawRequest.substr(pos, rc[0] - method.length() - url_or_host.length() - 1 );
-//	}
-//
-//	/* All right! let's deal with headers */
-//	pos = 0;
-//	if(rc.size() >= 2)
-//		while(true) {
-//			n = rawRequest.find(':', rc[pos] + 2);
-//			if(n == std::string::npos)	break;
-//			if(rc.size() == pos + 1) break;
-//			headers[rawRequest.substr(rc[pos] + 2, n - (rc[pos] + 2))] =
-//				(std::string)rawRequest.substr(n + 2, rc[pos + 1] -1 - n);
-//			++pos;
-//		}
-//	/* body*/
-//	if(split != 0)
-//		if(method.compare("POST") == 0)
-//			if(rawRequest.length() > split + 4)
-//				requestBody = rawRequest.substr(split + 4);
-//}
+
 
 /* Response Parser */
 http::responseParser::responseParser
@@ -391,7 +311,33 @@ bool http::isAllChunk(const std::string rawResponse)
 //	*/
 //}
 
+int http::read(net::TCPpeer& peer, std::string& rawData) {
+	ssize_t bytes, totalBytes = 0;
+	char tmpBuf[512];
+	rawData.clear();
+	do {
+		std::memset(tmpBuf, 0, 512);
+		bytes = peer.recv(tmpBuf, 512);
+		if (bytes > 0) {
+			totalBytes += bytes;
+			rawData.append(tmpBuf, bytes);
+		}
+		else if (bytes < 0) {
+			if (peer.getLastError() == SOCKET_TIMEOUT) {
+				std::cout << "[*] RECV TIMEOUT...\n";
+			}
+		}
+	} while (peer.availToRead());
+	
+	if (totalBytes == 0) return -1;
+	else return totalBytes;
+}
 
+int http::write(net::TCPpeer& peer, const std::string& data) {
+	int bytes = peer.send((const char*)data.data(),
+		data.length());
+	return bytes;
+}
 
 
 

@@ -26,7 +26,7 @@ SOFTWARE.
 #define __net_TCPserver
 
 #include "TCPsocket.hpp"
-#include "handlers/HTTPhandlers.hpp"
+#include "handlers/http.hpp"
 #include <shared_mutex>
 #include <condition_variable>
 #include <deque>
@@ -77,6 +77,8 @@ namespace net
 					peerAddr = new sockaddr_in;
 				else
 					peerAddr6 = new sockaddr_in6;
+
+				this->setStatus(0);
 
             } catch (SocketException& e) {
                 throw;
