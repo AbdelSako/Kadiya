@@ -14,24 +14,37 @@ std::string TEST_OK_200 = "HTTP/1.1 200 OK\r\n"
 "connection: closed\r\n\r\n"
 "<html><body><h1>Hello, World!</h1></body></html>\r\n\r\n";
 
+static class configKeys {
+public:
+	static std::string getDocument_Root(void) { return "Document_Root"; }
+	static std::string getMax_Host(void) { return "Max_Host"; }
+};
+
 std::string configFile("C:\\Users\\sakabdel\\source\\repos\\SOCKNET_API\\httpServerConfig.cfg");
 
-static class HttpServerConfig {
+class HttpServerConfig {
 private:
 	std::string Document_Root;
+	int Max_Host;
 	std::string tmp;
 public:
 	HttpServerConfig(std::ifstream& configFile) {
 		if (configFile.is_open()) {
-			configFile >> tmp >> Document_Root;
-			configFile.close();
+			while (!configFile.eof()) {
+				configFile >> tmp;
+
+				if (tmp == configKeys::getDocument_Root())
+					configFile >> this->Document_Root;
+				else if (tmp == configKeys::getMax_Host())
+					configFile >> this->Max_Host;
+			}
 		}
 		else {
 			std::cout << "[*] File not found.\n";
 		}
 	}
 
-	std::string getDocumentRoot(void) {
+	std::string getDocument_Root(void) {
 		return this->Document_Root;
 	}
 };

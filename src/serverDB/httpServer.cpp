@@ -1,21 +1,32 @@
 #define __httpConfig
 #include "serverDB/httpServer.hpp"
 
-//std::string configFileName = "C:\\Users\\sakabdel\\httpServerConfig.cfg";
-//std::string configFileName = ".\\httpServerConfig.cfg";
 std::ifstream configStream(configFile);
-
-
 HttpServerConfig httpServerConfig(configStream);
+
+std::string docRootPath(httpServerConfig.getDocument_Root());
+
+std::ifstream fileStreamToServe;
+std::string fileToServe(docRootPath);
+
 
 void serverDB::httpServer(net::TCPpeer peer) {
 	int inStatus, outStatus;
 	std::string rawData;
-	std::cout << httpServerConfig.getDocumentRoot() << std::endl;
+	std::cout << httpServerConfig.getDocument_Root() << std::endl;
 	if (inStatus = http::read(peer, rawData)) {
 		http::requestParser reqData(rawData);
 		std::cout << "[+] request: " << reqData.url_or_host << std::endl;
-		outStatus = http::write(peer, TEST_OK_200);
+		if (reqData.url_or_host == "/") {
+			fileToServe.append("index.html");
+			fileStreamToServe.open(fileToServe);
+			while (!fileStreamToServe.eof()) {
+				rawData.clear();
+				fileToServe.
+				outStatus = http::write(peer, )
+			}
+		}
+		//outStatus = http::write(peer, TEST_OK_200);
 	}
 
 	peer.killConn();
