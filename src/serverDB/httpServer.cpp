@@ -4,27 +4,37 @@
 std::ifstream configStream(configFile);
 HttpServerConfig httpServerConfig(configStream);
 
-std::string docRootPath(httpServerConfig.getDocument_Root());
+const std::string DOC_ROOT(httpServerConfig.getDocument_Root());
 
 std::ifstream fileStreamToServe;
-std::string fileToServe(docRootPath);
+std::string pathToDoc(DOC_ROOT);
 
+
+char outBuf[512];
 
 void serverDB::httpServer(net::TCPpeer peer) {
 	int inStatus, outStatus;
 	std::string rawData;
-	std::cout << httpServerConfig.getDocument_Root() << std::endl;
+	std::string buffer;
 	if (inStatus = http::read(peer, rawData)) {
 		http::requestParser reqData(rawData);
 		std::cout << "[+] request: " << reqData.url_or_host << std::endl;
 		if (reqData.url_or_host == "/") {
-			fileToServe.append("index.html");
-			fileStreamToServe.open(fileToServe);
-			while (!fileStreamToServe.eof()) {
-				rawData.clear();
-				fileToServe.
-				outStatus = http::write(peer, )
+			pathToDoc.append("index.html");
+		}
+		fileStreamToServe.open(pathToDoc);
+
+		if (fileStreamToServe.is_open()) {
+			rawData.clear();
+			while (std::getline(fileStreamToServe, buffer)) {
+				rawData.append(buffer);
 			}
+			fileStreamToServe.close();
+			outStatus = http::write(peer, TEST_OK_200+rawData+"\r\n\r\n");
+		}
+		else {
+			std::cout << "[*] I didn't get the file\n";
+			outStatus = http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
 		}
 		//outStatus = http::write(peer, TEST_OK_200);
 	}

@@ -11,8 +11,16 @@ std::string TEST_OK_200 = "HTTP/1.1 200 OK\r\n"
 "server: N'Nimba 1.0\r\n"
 "content-length: 48\r\n"
 "content-type: text/html\r\n"
-"connection: closed\r\n\r\n"
-"<html><body><h1>Hello, World!</h1></body></html>\r\n\r\n";
+"connection: closed\r\n\r\n";
+
+std::string TEST_OK_500 = "HTTP/1.1 500 OK\r\n"
+"server: N'Nimba 1.0\r\n"
+//"content-length: 48\r\n"
+"content-type: text/html\r\n"
+"connection: closed\r\n\r\n";
+
+std::string INTERNAL_ERROR = "<html><h1> Some error happened while"
+"N'nimba was trying to open the document</h1></html>\r\n\r\n";
 
 static class configKeys {
 public:
