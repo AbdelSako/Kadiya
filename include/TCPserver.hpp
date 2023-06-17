@@ -60,7 +60,17 @@ namespace net
 
 		//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
 
+		/* Modification */
+		std::mutex _mutex;
+		std::condition_variable	cv;
+		unsigned int threadNumber = NUM_OF_THREAD_LISTENER;
+
+		/* End of Modification */
+
 	public:
+		void setThreadNumber(unsigned int num) { this->threadNumber = num;}
+		unsigned int getThreadNUm(void) { return this->threadNumber; }
+		void newStartServer(unsigned int maxHost);
 		/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 		** only when it value changes to "true" */
 

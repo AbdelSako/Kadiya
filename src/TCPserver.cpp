@@ -129,6 +129,65 @@ void net::TCPserver::start(uint32_t maxHost) {
 
 }
 
+void net::TCPserver::newStartServer(unsigned int maxHost)
+{
+    //TODO: 
+    if (maxHost == 0) return ;
+
+    /* signal handler */
+    std::signal(SIGINT, TCPserver::signalHandler);
+    std::signal(SIGPIPE, TCPserver::signalHandler);
+
+    u_int numOfThreadListers = NUM_OF_THREAD_LISTENER;
+
+    std::shared_ptr<net::TCPserver> serverSharedPtr(this);
+    
+
+    /* Listen */
+    this->listen(maxHost);
+
+    auto acceptor = [serverSharedPtr]
+    {
+        net::TCPpeer peer;
+        while {
+            try 
+            {
+                peer = serverSharedPtr->accept();
+            }
+            catch (net::SocketException& e)
+            {
+                e.display();
+                return;
+            }
+
+            //ToDo: Remember to update the isValid()'s variable.
+            if (!peer.isValid()) 
+            {
+                std::cout << "[*] Failed to accept connection...\n";
+                continue;
+            }
+            else 
+            {
+                if (serverSharedPtr->serverCode != nullptr) 
+                {
+                    std::thread thr(serverSharedPtr->serverCode, peer);
+                    thr.detach();
+                }
+                else 
+                {
+                    handleConn(peer);
+
+                    peer.shutdown(0);
+                    peer.close();
+                }
+            }
+    };
+
+    for (int n = 0; n < numOfThreadListers; n++) {
+        ;
+    }
+}
+
 /* START THE SERVER */
 /* Threading starts here. 
     This method launches threadNum amount of listeners. Threaded listener run inside
@@ -263,8 +322,7 @@ void net::TCPserver::startThreadedServer(uint64_t maxHost) {
     std::thread thr;
     net::TCPpeer peer;
 
-    std::shared_ptr<net::TCPserver> ptr;
-    ptr.reset(this);
+    std::shared_ptr<net::TCPserver> ptr(this);
 
     this->listen(maxHost);
     std::cout << "[+] Listening for oncoming connections\n";
