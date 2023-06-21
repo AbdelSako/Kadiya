@@ -68,6 +68,7 @@ namespace net
 		/* End of Modification */
 
 	public:
+		int test;
 		void setThreadNumber(unsigned int num) { this->threadNumber = num;}
 		unsigned int getThreadNUm(void) { return this->threadNumber; }
 		void newStartServer(unsigned int maxHost);
@@ -147,7 +148,7 @@ namespace net
 		static void signalHandler(int signalNum);
 
 		/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-		void (*serverCode)(TCPpeer peer) = nullptr;
+		void (*serverCode)(std::shared_ptr<net::TCPserver>& server, TCPpeer peer) = nullptr;
 
 };
 

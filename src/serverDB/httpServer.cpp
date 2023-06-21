@@ -1,3 +1,4 @@
+
 #define __httpConfig
 #include "serverDB/httpServer.hpp"
 
@@ -12,7 +13,7 @@ std::string pathToDoc(DOC_ROOT);
 
 char outBuf[512];
 
-void serverDB::httpServer(net::TCPpeer peer) {
+void serverDB::httpServer(std::shared_ptr<net::TCPserver>& server, net::TCPpeer peer) {
 	int inStatus, outStatus;
 	std::string rawData;
 	std::string buffer;
@@ -22,14 +23,15 @@ void serverDB::httpServer(net::TCPpeer peer) {
 		if (reqData.url_or_host == "/") {
 			pathToDoc.append("index.html");
 		}
-		fileStreamToServe.open(pathToDoc);
+		if(!fileStreamToServe.is_open())
+			fileStreamToServe.open(pathToDoc);
 
 		if (fileStreamToServe.is_open()) {
 			rawData.clear();
 			while (std::getline(fileStreamToServe, buffer)) {
 				rawData.append(buffer);
 			}
-			fileStreamToServe.close();
+			//fileStreamToServe.close();
 			outStatus = http::write(peer, TEST_OK_200+rawData+"\r\n\r\n");
 		}
 		else {

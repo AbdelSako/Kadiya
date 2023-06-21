@@ -149,8 +149,8 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
     auto acceptor = [serverSharedPtr]
     {
         net::TCPpeer peer;
-        while {
-            try 
+        while (true) {
+            try
             {
                 peer = serverSharedPtr->accept();
             }
@@ -161,26 +161,26 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
             }
 
             //ToDo: Remember to update the isValid()'s variable.
-            if (!peer.isValid()) 
+            if (!peer.isValid())
             {
                 std::cout << "[*] Failed to accept connection...\n";
                 continue;
             }
-            else 
+            else
             {
-                if (serverSharedPtr->serverCode != nullptr) 
+                if (serverSharedPtr->serverCode != nullptr)
                 {
                     std::thread thr(serverSharedPtr->serverCode, peer);
                     thr.detach();
                 }
-                else 
+                else
                 {
                     handleConn(peer);
 
-                    peer.shutdown(0);
-                    peer.close();
+                    peer.killConn();
                 }
             }
+        }
     };
 
     for (int n = 0; n < numOfThreadListers; n++) {
