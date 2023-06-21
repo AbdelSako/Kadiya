@@ -112,7 +112,7 @@ net::TCPpeer net::TCPserver::accept(void)
 
     }
 }
-/* */
+/* ***************************************************** */
 void net::TCPserver::start(uint32_t maxHost) {
     std::signal(SIGINT, TCPserver::signalHandler);
     this->m_serverStarted = true;
@@ -120,6 +120,7 @@ void net::TCPserver::start(uint32_t maxHost) {
     net::TCPpeer peer;
     this->listen(maxHost);
     std::cout << "[+] Server is ready to accept peers on port " << this->serverPort << std::endl;
+    std::shared_ptr<net::TCPserver> serverSharedPtr(this);
     while (true) {
         peer = this->accept();
         this->serverCode(peer);
@@ -129,6 +130,7 @@ void net::TCPserver::start(uint32_t maxHost) {
 
 }
 
+/* ********************************************************** */
 void net::TCPserver::newStartServer(unsigned int maxHost)
 {
     //TODO: 
@@ -168,10 +170,13 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
             }
             else
             {
-                if (serverSharedPtr->serverCode != nullptr)
+                if (serverSharedPtr->codePointer.serverCode != nullptr)
                 {
-                    std::thread thr(serverSharedPtr->serverCode, peer);
-                    thr.detach();
+                    /* Detaching connected peers */
+                    std::thread peerThread(serverSharedPtr->codePointer.serverCode,
+                                                            serverSharedPtr,
+                                                            peer);
+                    peerThread.detach();
                 }
                 else
                 {
@@ -183,8 +188,10 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
         }
     };
 
+    /* Detaching listeners and accpetors */
     for (int n = 0; n < numOfThreadListers; n++) {
-        ;
+        std::thread acceptorThread(acceptor);
+        acceptorThread.detach();
     }
 }
 

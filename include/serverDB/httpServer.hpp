@@ -1,4 +1,4 @@
-#include "TCPsocket.hpp"
+#include "TCPserver.hpp"
 #include "handlers/http.hpp"
 #include <fstream>
 
@@ -6,7 +6,7 @@
 #ifndef __httpServer
 #define __httpServer
 
-//#ifdef __httpConfig
+#ifdef __httpConfig
 std::string TEST_OK_200 = "HTTP/1.1 200 OK\r\n"
 "server: N'Nimba 1.0\r\n"
 "content-length: 48\r\n"
@@ -28,7 +28,7 @@ public:
 	static std::string getMax_Host(void) { return "Max_Host"; }
 };
 
-std::string configFile("C:\\Users\\tech\\source\\repos\\SOCKNET_API\\httpServerConfig.cfg");
+std::string configFile("C:\\Users\\sakabdel\\source\\repos\\SOCKNET_API\\httpServerConfig.cfg");
 
 class HttpServerConfig {
 private:
@@ -80,12 +80,12 @@ public:
 	}
 };
 
-//#endif
+#endif
 
 namespace serverDB {
 	/* This is our HTTP server. In the mainHttpServer.cpp file, the serverCode() method pointer of
 		a TCPserver object points to this function. The argument TCPpeer class encapsulates a 
 		valid connection. */
-	void httpServer(std::shared_ptr<net::TCPserver>& server, net::TCPpeer peer);
+	void httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer);
 }
 #endif

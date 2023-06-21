@@ -15,7 +15,9 @@ int main(void)
 		server = new net::TCPserver(AF_INET, "127.0.0.1", 8080);
 
 		// Callback of server object is now pointing to the http proxy server function
-		server->serverCode = serverDB::httpServer;
+		server->codePointer.serverCode = serverDB::httpServer;
+		//server->serverCode = serverDB::httpServer;
+		//server->codePointer = serverDB::httpServer;
 	}
 	catch (net::SocketException& e) {
 		std::cout << "[MAIN}........\n";
@@ -25,7 +27,7 @@ int main(void)
 
 	try {
 		/* returns 0 on success. */
-		server->startServer(5);
+		server->newStartServer(5);
 
 
 		// Pauses execution until SIGINT is sent from the keyboard.

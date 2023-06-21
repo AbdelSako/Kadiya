@@ -13,7 +13,7 @@ std::string pathToDoc(DOC_ROOT);
 
 char outBuf[512];
 
-void serverDB::httpServer(std::shared_ptr<net::TCPserver>& server, net::TCPpeer peer) {
+void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
 	int inStatus, outStatus;
 	std::string rawData;
 	std::string buffer;

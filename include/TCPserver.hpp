@@ -26,8 +26,10 @@ SOFTWARE.
 #define __net_TCPserver
 
 #include "TCPsocket.hpp"
+#include "__TCPserver.hpp"
 #include "handlers/http.hpp"
 #include <shared_mutex>
+#include <memory>
 #include <condition_variable>
 #include <deque>
 #include <thread>
@@ -35,6 +37,12 @@ SOFTWARE.
 
 #define NUM_OF_THREAD_LISTENER 5
 
+/* Code pointers */
+class CodePointer {
+public:
+	CodePointer() = default;
+	void (*serverCode)(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) = nullptr;
+};
 
 namespace net
 {
@@ -117,6 +125,7 @@ namespace net
 				this->shutdown(SHUT_RDWR);
 				this->close();
 			}
+			//delete codePointer;
 		}
 
 		/* This function can be ran right after instantiation...to start the
@@ -148,7 +157,11 @@ namespace net
 		static void signalHandler(int signalNum);
 
 		/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-		void (*serverCode)(std::shared_ptr<net::TCPserver>& server, TCPpeer peer) = nullptr;
+		void (*serverCode)(TCPpeer peer) = nullptr;
+		void (*serverCode2)(std::shared_ptr<net::TCPserver> server, TCPpeer peer) = nullptr;
+
+		/************************************************ */
+		CodePointer codePointer; // new CodePointer();
 
 };
 
@@ -158,4 +171,6 @@ namespace net
 	/* Default connection handler */
 	void handleConn(net::TCPpeer &peer);
 };
+
+
 #endif
