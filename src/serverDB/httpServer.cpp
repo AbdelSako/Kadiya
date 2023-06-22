@@ -7,38 +7,60 @@ HttpServerConfig httpServerConfig(configStream);
 
 const std::string DOC_ROOT(httpServerConfig.getDocument_Root());
 
-std::ifstream fileStreamToServe;
-std::string pathToDoc(DOC_ROOT);
-
-
 char outBuf[512];
 
+FileHandler* fileHandler;
+
 void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
+	bool tmp;
+	std::ifstream fileStreamToServe;
+	std::string pathToDoc(DOC_ROOT);
+	std::string filename;
+
 	int inStatus, outStatus;
 	std::string rawData;
 	std::string buffer;
 	if (inStatus = http::read(peer, rawData)) {
+		/* Dont waste your time if the request is empty. */
+		if (rawData.empty()) {
+			peer.killConn();
+			return;
+		}
+
 		http::requestParser reqData(rawData);
 		std::cout << "[+] request: " << reqData.url_or_host << std::endl;
 		if (reqData.url_or_host == "/") {
-			pathToDoc.append("index.html");
-		}
-		if(!fileStreamToServe.is_open())
-			fileStreamToServe.open(pathToDoc);
-
-		if (fileStreamToServe.is_open()) {
-			rawData.clear();
-			while (std::getline(fileStreamToServe, buffer)) {
-				rawData.append(buffer);
-			}
-			//fileStreamToServe.close();
-			outStatus = http::write(peer, TEST_OK_200+rawData+"\r\n\r\n");
+			filename = "index.html";
+			pathToDoc.append(filename);
 		}
 		else {
-			std::cout << "[*] I didn't get the file\n";
-			outStatus = http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+			filename = reqData.url_or_host;
+			filename.erase(0, 1);
+			pathToDoc.append(filename);
 		}
-		//outStatus = http::write(peer, TEST_OK_200);
+		if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
+			/* Trapped all the threads attempting to open the same file */
+			std::unique_lock fileLock(server->getFileMutex());
+			if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
+				fileHandler = new FileHandler(pathToDoc);
+				server->OpenedFiles.insert({ filename, fileHandler });
+				tmp = server->OpenedFiles[filename]->isOpen();
+			}
+			fileLock.unlock();
+		}
+		auto _file = server->OpenedFiles[filename];
+		if (_file->isOpen()) {
+			http::write(peer, TEST_OK_200);
+			rawData = _file->getLine();
+			while (!rawData.empty()) {
+				http::write(peer, rawData);
+				rawData = _file->getLine();
+			}
+		}
+		else {
+			http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+		}
+		
 	}
 
 	peer.killConn();

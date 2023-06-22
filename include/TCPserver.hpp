@@ -29,14 +29,16 @@ SOFTWARE.
 #include "__TCPserver.hpp"
 #include "handlers/http.hpp"
 #include <shared_mutex>
-#include <memory>
+#include <map>
 #include <condition_variable>
 #include <deque>
 #include <thread>
 #include <chrono>
 
 #define NUM_OF_THREAD_LISTENER 5
-
+namespace net {
+	class TCPserver;
+ }
 /* Code pointers */
 class CodePointer {
 public:
@@ -69,7 +71,7 @@ namespace net
 		//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
 
 		/* Modification */
-		std::mutex _mutex;
+		mutable std::shared_mutex fileMutex;
 		std::condition_variable	cv;
 		unsigned int threadNumber = NUM_OF_THREAD_LISTENER;
 
@@ -163,6 +165,14 @@ namespace net
 		/************************************************ */
 		CodePointer codePointer; // new CodePointer();
 
+		/********************************************/
+		std::map<std::string, FileHandler*> OpenedFiles;
+
+		/***************************************************/
+		std::shared_mutex& getFileMutex(void) {
+			return fileMutex;
+		}
+
 };
 
 	/* */
@@ -171,6 +181,7 @@ namespace net
 	/* Default connection handler */
 	void handleConn(net::TCPpeer &peer);
 };
+
 
 
 #endif

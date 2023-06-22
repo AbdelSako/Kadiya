@@ -57,29 +57,6 @@ public:
 	}
 };
 
-class HttpFileHandler{
-	std::ifstream fileStream;
-	std::string pathToFile;
-	std::string buffer;
-	unsigned int fileSize;
-	bool isOpened;
-
-public:
-	HttpFileHandler(std::string pathToFile) {
-		this->fileStream.open(pathToFile);
-	}
-	bool isOpen(void) {
-		return this->fileStream.is_open();
-	}
-	std::string getLine() {
-		if (this->isOpen()) {
-			buffer.clear();
-			std::getline(fileStream, buffer);
-			return buffer;
-		}
-	}
-};
-
 #endif
 
 namespace serverDB {
