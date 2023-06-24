@@ -38,31 +38,60 @@ void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer p
 			filename.erase(0, 1);
 			pathToDoc.append(filename);
 		}
-		if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
-			/* Trapped all the threads attempting to open the same file */
-			std::unique_lock fileLock(server->getFileMutex());
-			if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
+		if (server->cached.find(filename) == server->cached.end()) {
+			std::unique_lock fileLock(server->getFileMutex()); //LOCK
+			if (server->cached.find(filename) == server->cached.end()) {
+				std::string data, buffer;
 				fileHandler = new FileHandler(pathToDoc);
-				server->OpenedFiles.insert({ filename, fileHandler });
-				tmp = server->OpenedFiles[filename]->isOpen();
+				if (fileHandler->isOpen()) {
+					while (fileHandler->eof()) {
+						data.append(fileHandler->getLine());
+					}
+					server->cached.insert({ filename, data });
+					fileHandler->close();
+				}
+				else 
+				{
+					http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+					peer.killConn();
+					return;
+				}
 			}
-			fileLock.unlock();
+			fileLock.unlock(); //UNLOCK
 		}
-		auto _file = server->OpenedFiles[filename];
-		if (_file->isOpen()) {
-			http::write(peer, TEST_OK_200);
-			rawData = _file->getLine();
-			while (!rawData.empty()) {
-				http::write(peer, rawData);
-				rawData = _file->getLine();
-			}
-		}
-		else {
-			http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
-		}
+
+		std::string content = server->cached[filename];
+		http::write(peer, TEST_OK_200 + content);
+
+		//if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
+		//	/* Trapped all the threads attempting to open the same file */
+
+		//	std::unique_lock fileLock(server->getFileMutex()); //LOCK
+		//	if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
+		//		fileHandler = new FileHandler(pathToDoc);
+		//		server->OpenedFiles.insert({ filename, fileHandler });
+		//		tmp = server->OpenedFiles[filename]->isOpen();
+		//	}
+		//	fileLock.unlock(); //UNLOCK
+		//}
+		//auto _file = server->OpenedFiles[filename];
+		//if (_file->isOpen()) {
+		//	std::unique_lock fileLock(server->getFileMutex()); // LOCK
+		//	http::write(peer, TEST_OK_200);
+		//	_file->seek(0);
+		//	rawData = _file->getLine();
+		//	while (!rawData.empty()) {
+		//		http::write(peer, rawData);
+		//		rawData = _file->getLine();
+		//	}
+		//	fileLock.unlock(); //UNLOCK
+		//}
+		//else {
+		//	http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+		//}
 		
 	}
-
+	//fileHandler->close();
 	peer.killConn();
 
 }

@@ -16,6 +16,9 @@ public:
 	bool isOpen(void) {
 		return this->fileStream.is_open();
 	}
+	bool eof(void) {
+		return this->fileStream.eof();
+	}
 	std::string getLine() {
 		buffer.clear();
 		if (this->isOpen())
@@ -26,9 +29,6 @@ public:
 		this->fileStream.seekg(value);
 	}
 
-	std::ifstream getFileStream(void) {
-		
-	}
 	void close() {
 		this->fileStream.close();
 	}

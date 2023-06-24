@@ -168,10 +168,15 @@ namespace net
 		/********************************************/
 		std::map<std::string, FileHandler*> OpenedFiles;
 
+		/**********************************************/
+		std::map<std::string, std::string> cached;
+
 		/***************************************************/
 		std::shared_mutex& getFileMutex(void) {
 			return fileMutex;
 		}
+		/********************************* */
+		std::vector<std::string> content;
 
 };
 
