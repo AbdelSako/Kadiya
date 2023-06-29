@@ -3,28 +3,24 @@
 #include <fstream>
 #include <filesystem>
 
-
-#ifndef __httpServer
-#define __httpServer
-
-
+//Uncomment the next line if the "#ifdef __httpConfig" block is blurry.
+//#define __httpConfig
 
 #ifdef __httpConfig
+std::string errorResponse(void) {
+	std::string INTERNAL_ERROR = "<html><h1> Some error happened while"
+		"N'nimba was trying to open the document</h1></html>\r\n\r\n";
 
-std::string TEST_OK_200 = "HTTP/1.1 200 OK\r\n"
-"server: N'Nimba 1.0\r\n"
-"content-length: 122\r\n"
-"content-type: text/html\r\n"
-"connection: closed\r\n\r\n";
+	int contentLength = INTERNAL_ERROR.length();
 
-std::string TEST_OK_500 = "HTTP/1.1 500 OK\r\n"
-"server: N'Nimba 1.0\r\n"
-//"content-length: 48\r\n"
-"content-type: text/html\r\n"
-"connection: closed\r\n\r\n";
+	std::string TEST_OK_500 = "HTTP/1.1 500 OK\r\n"
+		"server: N'Nimba 1.0\r\n"
+		"content-length: " + std::to_string(contentLength) + "\r\n"
+		"content-type: text/html\r\n"
+		"connection: closed\r\n\r\n";
 
-std::string INTERNAL_ERROR = "<html><h1> Some error happened while"
-"N'nimba was trying to open the document</h1></html>\r\n\r\n";
+	return TEST_OK_500 + INTERNAL_ERROR;
+}
 
 class configKeys {
 public:
@@ -79,7 +75,18 @@ public:
 		this->connection = conn;
 	}
 
-	std::string getHead(void) {
+	static std::string conType(std::string& suffix) {
+		if (suffix == "png") {
+			return "image/png";
+		}
+		else if (suffix == "html") {
+			return "text/html";
+		}
+
+		return "text/html";
+	}
+
+	std::string getHeader(void) {
 		std::string head;
 		head.append("HTTP/1.1 200 OK\r\n");
 		head.append("server: " + server + "\r\n");
@@ -90,6 +97,12 @@ public:
 	}
 };
 
+void printPath(void) {
+	std::cout << std::filesystem::current_path() << '\n'; // (1)
+	std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
+	std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+}
+
 #endif
 
 namespace serverDB {
@@ -98,4 +111,4 @@ namespace serverDB {
 		valid connection. */
 	void httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer);
 }
-#endif
+//#endif

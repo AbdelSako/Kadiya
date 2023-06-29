@@ -1,13 +1,7 @@
 
 #define __httpConfig
 #include "serverDB/httpServer.hpp"
-#include <filesystem>
 
-void printPath(void) {
-	std::cout << std::filesystem::current_path() << '\n'; // (1)
-	std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
-	std::cout << "Current path is " << std::filesystem::current_path() << '\n';
-}
 
 std::ifstream configStream(configFile);
 HttpServerConfig httpServerConfig(configStream);
@@ -42,37 +36,38 @@ void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer p
 		}
 		else {
 			filename = reqData.url_or_host;
-			filename.erase(0, 1);
+			//filename.erase(0, 1);
 			pathToDoc.append(filename);
 		}
 		FileHandler fileHandler(pathToDoc);
 
 		if (!fileHandler.isOpen()) {
-			http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+			http::write(peer, errorResponse());
 			peer.killConn();
 			fileHandler.close();
 			return;
 		}
+
+		/* File ext*/
+		std::string fileExt = filename.substr(filename.rfind(".") + 1);
 		
 		/* file is Opened */
 		HeaderHandler headerHandler;
-		headerHandler.setContentLength(fileHandler.getSize());
+		/* +4 for  "\r\n\r\n" */
+		headerHandler.setContentLength(fileHandler.getSize() + 4);
 		headerHandler.setConnection("closed");
-		headerHandler.setContentType("text/html");
-		std::string header = headerHandler.getHead();
+		headerHandler.setContentType(fileExt);
+		std::string header = headerHandler.getHeader();
 		http::write(peer, header);
-		int fileSize = fileHandler.getSize();
-		//std::string bb = fileHandler.getChunk(fileSize);
+
 		std::string tmp;
-		//fileHandler.seek(0);
 		while (!fileHandler.eof()) {
 			tmp.clear();
-			tmp = fileHandler.getLine() + "\r\n";
+			tmp = fileHandler.getLine() + "\n";
 			http::write(peer, tmp);
 		}
-		//int s = bb.length();
-		//http::write(peer, bb);
-		//http::write(peer, "\r\n\r\n");
+		/* Send these characters to mark the end of the http transfer. */
+		http::write(peer, "\r\n\r\n"); 
 		fileHandler.close();
 	}
 	peer.killConn();

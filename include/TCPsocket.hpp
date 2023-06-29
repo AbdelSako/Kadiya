@@ -27,7 +27,7 @@ SOFTWARE.
 
 #ifdef _WIN32
 
-#undef UNICODE
+#undef UNICODE 
 #define WIN32_LEAN_AND_MEAN
 #define SHUT_RDWR SD_BOTH
 #define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT //Socket type not supported
