@@ -1,20 +1,27 @@
 
 #define __httpConfig
 #include "serverDB/httpServer.hpp"
+#include <filesystem>
+
+void printPath(void) {
+	std::cout << std::filesystem::current_path() << '\n'; // (1)
+	std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
+	std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+}
 
 std::ifstream configStream(configFile);
 HttpServerConfig httpServerConfig(configStream);
 
+//TODO:
 const std::string DOC_ROOT(httpServerConfig.getDocument_Root());
 
-char outBuf[512];
-
-FileHandler* fileHandler;
 
 void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
-	bool tmp;
+	printPath();
 	std::ifstream fileStreamToServe;
 	std::string pathToDoc(DOC_ROOT);
+	//TODO:
+	pathToDoc.insert(9, "source/repos/");
 	std::string filename;
 
 	int inStatus, outStatus;
@@ -38,60 +45,36 @@ void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer p
 			filename.erase(0, 1);
 			pathToDoc.append(filename);
 		}
-		if (server->cached.find(filename) == server->cached.end()) {
-			std::unique_lock fileLock(server->getFileMutex()); //LOCK
-			if (server->cached.find(filename) == server->cached.end()) {
-				std::string data, buffer;
-				fileHandler = new FileHandler(pathToDoc);
-				if (fileHandler->isOpen()) {
-					while (fileHandler->eof()) {
-						data.append(fileHandler->getLine());
-					}
-					server->cached.insert({ filename, data });
-					fileHandler->close();
-				}
-				else 
-				{
-					http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
-					peer.killConn();
-					return;
-				}
-			}
-			fileLock.unlock(); //UNLOCK
+		FileHandler fileHandler(pathToDoc);
+
+		if (!fileHandler.isOpen()) {
+			http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
+			peer.killConn();
+			fileHandler.close();
+			return;
 		}
-
-		std::string content = server->cached[filename];
-		http::write(peer, TEST_OK_200 + content);
-
-		//if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
-		//	/* Trapped all the threads attempting to open the same file */
-
-		//	std::unique_lock fileLock(server->getFileMutex()); //LOCK
-		//	if (server->OpenedFiles.find(filename) == server->OpenedFiles.end()) {
-		//		fileHandler = new FileHandler(pathToDoc);
-		//		server->OpenedFiles.insert({ filename, fileHandler });
-		//		tmp = server->OpenedFiles[filename]->isOpen();
-		//	}
-		//	fileLock.unlock(); //UNLOCK
-		//}
-		//auto _file = server->OpenedFiles[filename];
-		//if (_file->isOpen()) {
-		//	std::unique_lock fileLock(server->getFileMutex()); // LOCK
-		//	http::write(peer, TEST_OK_200);
-		//	_file->seek(0);
-		//	rawData = _file->getLine();
-		//	while (!rawData.empty()) {
-		//		http::write(peer, rawData);
-		//		rawData = _file->getLine();
-		//	}
-		//	fileLock.unlock(); //UNLOCK
-		//}
-		//else {
-		//	http::write(peer, TEST_OK_500 + INTERNAL_ERROR);
-		//}
 		
+		/* file is Opened */
+		HeaderHandler headerHandler;
+		headerHandler.setContentLength(fileHandler.getSize());
+		headerHandler.setConnection("closed");
+		headerHandler.setContentType("text/html");
+		std::string header = headerHandler.getHead();
+		http::write(peer, header);
+		int fileSize = fileHandler.getSize();
+		//std::string bb = fileHandler.getChunk(fileSize);
+		std::string tmp;
+		//fileHandler.seek(0);
+		while (!fileHandler.eof()) {
+			tmp.clear();
+			tmp = fileHandler.getLine() + "\r\n";
+			http::write(peer, tmp);
+		}
+		//int s = bb.length();
+		//http::write(peer, bb);
+		//http::write(peer, "\r\n\r\n");
+		fileHandler.close();
 	}
-	//fileHandler->close();
 	peer.killConn();
 
 }

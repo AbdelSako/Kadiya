@@ -113,7 +113,7 @@ net::TCPpeer net::TCPserver::accept(void)
     }
 }
 /* ***************************************************** */
-void net::TCPserver::start(uint32_t maxHost) {
+void net::TCPserver::startServer(uint32_t maxHost) {
     std::signal(SIGINT, TCPserver::signalHandler);
     this->m_serverStarted = true;
     //this->serverCode = serverDB::httpProxyServer;
@@ -131,16 +131,26 @@ void net::TCPserver::start(uint32_t maxHost) {
 }
 
 /* ********************************************************** */
-void net::TCPserver::newStartServer(unsigned int maxHost)
+/* START THE SERVER */
+/* Threading starts here.
+    This method launches threadNum amount of listeners. Threaded listener run inside
+    TCPserverThreadCore method and each listener could aceept a connection and then spawns
+    another function which will be detached from the TCPserverThreadCore method from the use of threading.
+    The spawned function would be your server function.
+
+    Before running the startServer() method, you first need to point the member function pointer
+    void (*server)(TCPpeer &peer) of this server object to your server code. */
+void net::TCPserver::startThreadedServer(unsigned int maxHost,
+    unsigned int numberOfThreads)
 {
+    this->numberOfThreads = numberOfThreads;
     //TODO: 
     if (maxHost == 0) return ;
+    if (numberOfThreads == 0) return;
 
     /* signal handler */
     std::signal(SIGINT, TCPserver::signalHandler);
     std::signal(SIGPIPE, TCPserver::signalHandler);
-
-    u_int numOfThreadListers = NUM_OF_THREAD_LISTENER;
 
     std::shared_ptr<net::TCPserver> serverSharedPtr(this);
     
@@ -155,6 +165,8 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
             try
             {
                 peer = serverSharedPtr->accept();
+                std::cout << "[+] Accepted by thread ID: " <<
+                    std::this_thread::get_id() << "\n";
             }
             catch (net::SocketException& e)
             {
@@ -188,57 +200,14 @@ void net::TCPserver::newStartServer(unsigned int maxHost)
         }
     };
 
-    /* Detaching listeners and accpetors */
-    for (int n = 0; n < numOfThreadListers; n++) {
+    /* Detaching accpetors */
+  
+    for (int n = 0; n < this->numberOfThreads; n++) {
         std::thread acceptorThread(acceptor);
         acceptorThread.detach();
     }
 }
 
-/* START THE SERVER */
-/* Threading starts here. 
-    This method launches threadNum amount of listeners. Threaded listener run inside
-    TCPserverThreadCore method and each listener could aceept a connection and then spawns
-    another function which will be detached from the TCPserverThreadCore method from the use of threading.
-    The spawned function would be your server function. 
-    
-    Before running the startServer() method, you first need to point the member function pointer
-    void (*server)(TCPpeer &peer) of this server object to your server code. */
-int net::TCPserver::startServer(size_t maxHost)
-{
-    //TODO: 
-    if(maxHost == 0) return -1;
-
-	/* signal handler */
-	std::signal(SIGINT, TCPserver::signalHandler);
-	std::signal(SIGPIPE, TCPserver::signalHandler);
-
-    u_int numOfThreadListers = NUM_OF_THREAD_LISTENER;
-
-	/* Listen */
-	net::TCPserver::listen(maxHost);
-
-	std::deque<std::thread> acceptThreads;
-	std::cout << "[+] Starting TCPserver #" << serverInstances << " with "
-        << maxHost << " threads\n";
-
-	std::shared_ptr<net::TCPserver> ptr;
-	ptr.reset(this);
-
-	/* Store threads in a vector */
-	for( ; numOfThreadListers > 0; numOfThreadListers--)
-		acceptThreads.push_back(std::thread(TCPserverThreadCore, ptr));
-
-	/* Detach threads */
-	for(std::thread &acceptWorker : acceptThreads)
-		acceptWorker.detach();
-
-	/* Increase the instance */
-	std::cout << "[+] TCPserver #" << serverInstances << " is now running...\n";
-	m_serverStarted = true;
-
-	return 0;
-}
 
 /*Check if the server is running */
 bool net::TCPserver::hasStarted(void)
@@ -319,52 +288,7 @@ void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
 		}
 	}
 }
-
-/* Threaded Server 
-    This method blocks at accept and then accepted peers are threaded */
-void net::TCPserver::startThreadedServer(uint64_t maxHost) {
-    //TODO:
-    net::SOCKET remoteSock;
-    std::string callbacksID;
-    std::thread thr;
-    net::TCPpeer peer;
-
-    std::shared_ptr<net::TCPserver> ptr(this);
-
-    this->listen(maxHost);
-    std::cout << "[+] Listening for oncoming connections\n";
-    while (true) {
-        //TODO:
-        if (this->hasToShutdown())
-            return;
-
-        try {
-            peer = this->accept();
-        }
-        catch (net::SocketException& e) {
-            e.display();
-            return;
-        }
-
-        //ToDo: Remember to update the isValid()'s variable.
-        if (!peer.isValid()) {
-            std::cout << "[*] Failed to accept connection...\n";
-            continue;
-        }
-        else {
-            if (this->serverCode != nullptr) {
-                thr = std::thread(this->serverCode, peer);
-                thr.detach();
-            }
-            else {
-                handleConn(peer);
-
-                peer.shutdown(0);
-                peer.close();
-            }
-        }
-    }
-}
+    
 
 void net::handleConn(net::TCPpeer &peer)
 {

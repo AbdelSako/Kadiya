@@ -73,15 +73,16 @@ namespace net
 		/* Modification */
 		mutable std::shared_mutex fileMutex;
 		std::condition_variable	cv;
-		unsigned int threadNumber = NUM_OF_THREAD_LISTENER;
+		unsigned int numberOfThreads = NUM_OF_THREAD_LISTENER;
 
 		/* End of Modification */
 
 	public:
 		int test;
-		void setThreadNumber(unsigned int num) { this->threadNumber = num;}
-		unsigned int getThreadNUm(void) { return this->threadNumber; }
-		void newStartServer(unsigned int maxHost);
+		void setThreadNumber(unsigned int num) { this->numberOfThreads = num;}
+		unsigned int getNumberOfThreads(void) { return this->numberOfThreads; }
+		void startThreadedServer(unsigned int maxHost,
+			unsigned int numberOfThreads=NUM_OF_THREAD_LISTENER);
 		/* Monitors net::TCPserver::m_shutdownTCPservers and returns
 		** only when it value changes to "true" */
 
@@ -130,17 +131,7 @@ namespace net
 			//delete codePointer;
 		}
 
-		/* This function can be ran right after instantiation...to start the
-		** server.
-		** Arguments:
-		**      threadNum: the number of detached threads to run
-		** return value:
-        **      -1: If the server fails to start.
-        **       0: Success. */
-		int startServer(size_t threadNum);
-
-		void startThreadedServer(uint64_t maxHost);
-		void start(uint32_t maxHost);
+		void startServer(uint32_t maxHost);
 
 		/* checks if server has started */
 		bool hasStarted(void);
