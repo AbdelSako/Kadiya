@@ -1,5 +1,5 @@
-#ifdef _WIN32
-int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
-#else
-int SOCKET_TIMEOUT = EWOULDBLOCK;
-#endif
+//#ifdef _WIN32
+//int SOCKET_TIMEOUT = WSAEWOULDBLOCK;
+//#else
+//int SOCKET_TIMEOUT = EWOULDBLOCK;
+//#endif

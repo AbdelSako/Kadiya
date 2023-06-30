@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 #include "TCPclient.hpp"
+#include <iostream>
+#include "SocketException.hpp"
 
 /* CONNECT TO REMOTE HOST.
 the string "remoteAddr" could be a domain name or IPv4/IPv6 address */

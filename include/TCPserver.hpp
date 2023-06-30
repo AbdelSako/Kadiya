@@ -22,18 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#if !defined(__net_TCPserver)
-#define __net_TCPserver
+#ifndef __TCPserver
+#define __TCPserver
 
 #include "TCPsocket.hpp"
 #include "__TCPserver.hpp"
-#include "handlers/http.hpp"
+#include "SocketException.hpp"
+#include <vector>
 #include <shared_mutex>
 #include <map>
 #include <condition_variable>
-#include <deque>
-#include <thread>
-#include <chrono>
 
 #define NUM_OF_THREAD_LISTENER 5
 namespace net {

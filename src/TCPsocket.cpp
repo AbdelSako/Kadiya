@@ -24,6 +24,13 @@ SOFTWARE.
 
 #include "TCPsocket.hpp"
 #include "SocketException.hpp"
+#include <sys/types.h>
+#include <cerrno>
+#include <exception>
+#include <fcntl.h>
+
+
+
 
 /* Definition of net::TCPsocket::socket */
 int net::TCPsocket::socket(void)

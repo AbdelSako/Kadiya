@@ -21,11 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
+#ifndef __TCPclient
+#define __TCPclient
 #include <TCPsocket.hpp>
-
-#if !defined(__net_TCPclient)
-#define __net_TCPclient
+#include "__TCPsocket.hpp"
 
 namespace net
 {

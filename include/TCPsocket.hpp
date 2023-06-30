@@ -22,33 +22,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#if !defined(__net_TCPsocket)
-#define __net_TCPsocket
+#ifndef __TCPsocket
+#define __TCPsocket
+#include "__TCPsocket.hpp"
 
 #ifdef _WIN32
-
-#undef UNICODE 
+/* The following 2 lines are needed by winSock. They have to be executed before 
+including "winsock2.h" */
+#undef UNICODE
 #define WIN32_LEAN_AND_MEAN
-#define SHUT_RDWR SD_BOTH
-#define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT //Socket type not supported
-#define ssize_t INT64
-#define ioctl ioctlsocket
-#define SIGPIPE EPIPE
-#define EWOULDBLOCK WSAEWOULDBLOCK
 
-#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <io.h>
-
+#include <windows.h>
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
-// #pragma comment (lib, "Mswsock.lib")
+//#pragma comment (lib, "Mswsock.lib")
 
 #else
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -61,21 +52,21 @@ SOFTWARE.
 
 #endif
 
-#include <sys/types.h>
 #include <string>
-#include <cstring>
-#include <cerrno>
-#include <exception>
-
-#include <fcntl.h>
 #include <csignal>
 
-#include "__TCPsocket.hpp"
-#include "SocketException.hpp"
-#include <iostream>
+//#include "__TCPsocket.hpp"
 
 namespace net
 {
+	struct PeerInfo {
+		PeerInfo() {}
+		std::string addr;
+		uint16_t port;
+		uint8_t af;
+		uint32_t sockfd;
+	};
+
     typedef int SOCKET;
 
 	class TCPsocket

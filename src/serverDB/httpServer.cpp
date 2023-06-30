@@ -1,6 +1,6 @@
-
-#define __httpConfig
+#include "serverDB/__httpServer.hpp"
 #include "serverDB/httpServer.hpp"
+#include "handlers/http.hpp"
 
 
 std::ifstream configStream(configFile);
@@ -8,7 +8,6 @@ HttpServerConfig httpServerConfig(configStream);
 
 //TODO:
 const std::string DOC_ROOT(httpServerConfig.getDocument_Root());
-
 
 void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
 	printPath();

@@ -25,6 +25,7 @@ SOFTWARE.
 #include "TCPserver.hpp"
 #include "SocketException.hpp"
 #include "serverDB/httpProxy2.0.hpp"
+#include <thread>
 
 /*  */
 uint16_t net::TCPserver::serverInstances = 0;
@@ -239,53 +240,6 @@ void net::TCPserver::signalHandler(int signalNum)
 		m_shutdownTCPservers = true;
 		m_intSigCond.notify_one();
 		std::this_thread::sleep_for(std::chrono::seconds(2));
-	}
-}
-
-/* This where threading of the server happens. */
-void net::TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server)
-{
-	static int threadCount = 0;
-	net::SOCKET remoteSock;
-	std::string callbacksID;
-	std::thread thr;
-
-	threadCount += 1;
-
-	net::TCPserver *server = _server.get();
-
-	net::TCPpeer peer;
-
-	while(true) {
-        //TODO: I need to work on this variable.
-		if(server->hasToShutdown()) return;
-
-		try {/* Accept incoming */
-        peer = server->accept();
-
-		} catch(net::SocketException& e) {
-			e.display();
-			return;
-		} catch(...) {
-			std::cout << "\n[*] This behavior needs to be investigated. \n\n[*] High Priority!\n";
-			server->signalHandler(SIGTERM);
-		}
-
-		if(!peer.isValid()) {
-            		std::cout << "[*] Failed to accept connection...\n";
-            		continue;
-		}
-        else {
-            if (server->serverCode != nullptr) {
-                thr = std::thread(server->serverCode, peer);
-                thr.detach();
-            } else {
-                handleConn(peer);
-
-                peer.shutdown(0);
-                peer.close();
-            }
-		}
 	}
 }
     

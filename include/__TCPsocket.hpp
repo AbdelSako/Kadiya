@@ -22,33 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+
+/* Definition of types and variable that can be used on both Linux and Windows */
 #ifndef __TCPstuff
 #define __TCPstuff
 
-namespace net
-{
-    /* */
-    enum flags
-    {
-        GET_WILL_CLOSE_SOCKET,
-        GET_KEEP_ALIVE,
-        GET_TRANS_BUFFER,
-        GET_RECV_TIMEOUT,
-        GET_SEND_TIMEOUT,
-        /* */
-        SET_WILL_CLOSE_SOCKET = 0, //
-        SET_KEEP_ALIVE,
-        SET_TRANS_BUFFER,
-        SET_RECV_TIMEOUT,
-        SET_SEND_TIMEOUT
-    };
+#ifdef _WIN32
 
-    struct PeerInfo{
-        PeerInfo() {}
-        std::string addr;
-        uint16_t port;
-        uint8_t af;
-        uint32_t sockfd;
-    };
-};
-#endif // __TCPstuff
+#define SHUT_RDWR SD_BOTH
+#define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT //Socket type not supported
+#define ssize_t INT64
+#define ioctl ioctlsocket
+#define SIGPIPE EPIPE
+#define EWOULDBLOCK WSAEWOULDBLOCK
+
+#endif
+#endif

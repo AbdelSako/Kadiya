@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "handlers/http.hpp"
-#include "socketError.hpp"
+//#include "socketError.hpp"
 #include <algorithm>
 #include <sstream>
 
@@ -323,7 +323,7 @@ int http::read(net::TCPpeer& peer, std::string& rawData) {
 			rawData.append(tmpBuf, bytes);
 		}
 		else if (bytes < 0) {
-			if (peer.getLastError() == SOCKET_TIMEOUT) {
+			if (peer.getLastError() == EWOULDBLOCK) {
 				std::cout << "[*] RECV TIMEOUT...\n";
 			}
 		}

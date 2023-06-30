@@ -23,6 +23,9 @@ SOFTWARE.
 */
 
 #include "serverDB/httpProxy2.0.hpp"
+#include "SocketException.hpp"
+
+
 std::string OK_200_KEEPALIVE = "HTTP/1.1 200 Connection Established\r\n"
 								"Host: WebProject\r\n"
 								"Connection: keep-alive\r\n\r\n";
@@ -285,7 +288,7 @@ void serverDB::HttpSocket::httpRecv(std::string& data) {
 			std::cout << "[*] TIMEOUT: ";
 			e.display();
 			/* If recv didn't not timeout then an error occured. */
-			if (e.getErrorCode() != SOCKET_TIMEOUT)
+			if (e.getErrorCode() != EWOULDBLOCK)
 				throw;
 			bytes = 0;
 		}

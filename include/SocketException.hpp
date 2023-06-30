@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#if !defined(__net_SocketException)
-#define __net_SocketException
+#ifndef __SocketException)
+#define __SocketException
 
 #include <cerrno>
 #include <iostream>
