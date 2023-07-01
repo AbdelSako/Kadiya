@@ -13,7 +13,7 @@ int main(void)
 		** The first argument is the address family; the second is a char* of the address
 		** to bind to, zero for any address. */
 		std::cout << "[+] Preparing the server.\n";
-		server = new net::TCPserver(AF_INET, "127.0.0.1", 8080);
+		server = new net::TCPserver(AF_INET, "127.0.0.1", 8090);
 
 		// Callback of server object is now pointing to the http proxy server function
 		server->codePointer.serverCode = serverDB::httpServer;

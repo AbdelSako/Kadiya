@@ -193,7 +193,7 @@ void net::TCPserver::startThreadedServer(unsigned int maxHost,
                 }
                 else
                 {
-                    handleConn(peer);
+                    serverSharedPtr->defaultResponse(peer);
 
                     peer.killConn();
                 }
@@ -242,7 +242,12 @@ void net::TCPserver::signalHandler(int signalNum)
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 }
-    
+
+void net::TCPserver::defaultResponse(net::TCPpeer& peer) {
+    std::string msg("[+] This is a default response, you wirte your onw code.\n");
+    msg.append("[+] Don't modify this function.\n");
+    peer.send(msg.data(), msg.size());
+}
 
 void net::handleConn(net::TCPpeer &peer)
 {

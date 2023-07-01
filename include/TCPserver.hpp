@@ -150,6 +150,9 @@ namespace net
 		/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
 		void (*serverCode)(TCPpeer peer) = nullptr;
 		void (*serverCode2)(std::shared_ptr<net::TCPserver> server, TCPpeer peer) = nullptr;
+		/* Default Response 
+		This function is executed if you failed to point "serverCode */
+		void defaultResponse(net::TCPpeer& peer);
 
 		/************************************************ */
 		CodePointer codePointer; // new CodePointer();
