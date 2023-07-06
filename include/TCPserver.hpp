@@ -158,10 +158,10 @@ namespace net
 		CodePointer codePointer; // new CodePointer();
 
 		/********************************************/
-		std::map<std::string, FileHandler*> OpenedFiles;
+		//std::map<std::string, FileHandler*> OpenedFiles;
 
 		/**********************************************/
-		std::map<std::string, std::string> cached;
+		//std::map<std::string, std::string> cached;
 
 		/***************************************************/
 		std::shared_mutex& getFileMutex(void) {

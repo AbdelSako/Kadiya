@@ -4,6 +4,9 @@
 #include <fstream>
 #include <filesystem>
 
+#define DOCUMENT_ROOT (std::string)"Document_Root"
+#define MAX_HOST (std::string)"Max_Host"
+
 std::string errorResponse(void) {
 	std::string INTERNAL_ERROR = "<html><h1> Some error happened while"
 		"N'nimba was trying to open the document</h1></html>\r\n\r\n";
@@ -21,7 +24,7 @@ std::string errorResponse(void) {
 
 class configKeys {
 public:
-	static std::string getDocument_Root(void) { return "Document_Root"; }
+	static std::string getDocument_Root(void) { return DOCUMENT_ROOT; }
 	static std::string getMax_Host(void) { return "Max_Host"; }
 };
 
@@ -54,50 +57,4 @@ public:
 		return this->Document_Root;
 	}
 };
-
-class HeaderHandler {
-	const std::string server = "N'Nimba";
-	std::string
-		contentType,
-		connection;
-	unsigned int contentLength;
-public:
-	void setContentLength(unsigned int size) {
-		this->contentLength = size;
-	}
-	void setContentType(const std::string type) {
-		this->contentType = type;
-	}
-	void setConnection(const std::string conn) {
-		this->connection = conn;
-	}
-
-	static std::string conType(std::string& suffix) {
-		if (suffix == "png") {
-			return "image/png";
-		}
-		else if (suffix == "html") {
-			return "text/html";
-		}
-
-		return "text/html";
-	}
-
-	std::string getHeader(void) {
-		std::string head;
-		head.append("HTTP/1.1 200 OK\r\n");
-		head.append("server: " + server + "\r\n");
-		head.append("content-length: " + std::to_string(contentLength) + "\r\n");
-		head.append("content-type: " + contentType + "\r\n");
-		head.append("connection: " + connection + "\r\n");
-		return head.append("\r\n");
-	}
-};
-
-void printPath(void) {
-	std::cout << std::filesystem::current_path() << '\n'; // (1)
-	std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
-	std::cout << "Current path is " << std::filesystem::current_path() << '\n';
-}
-
 #endif

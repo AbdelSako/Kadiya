@@ -1,6 +1,8 @@
-#include "serverDB/__httpServer.hpp"
-#include "serverDB/httpServer.hpp"
-#include "handlers/http.hpp"
+#include "http/httpServer/__httpServer.hpp"
+#include "http/httpServer/httpServer.hpp"
+#include "http/httpServer/httpServerHelpers.hpp"
+#include "http/http.hpp"
+#include "helpers.hpp"
 
 
 std::ifstream configStream(configFile);
@@ -9,8 +11,7 @@ HttpServerConfig httpServerConfig(configStream);
 //TODO:
 const std::string DOC_ROOT(httpServerConfig.getDocument_Root());
 
-void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
-	printPath();
+void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
 	std::ifstream fileStreamToServe;
 	std::string pathToDoc(DOC_ROOT);
 	//TODO:
@@ -40,8 +41,10 @@ void serverDB::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer p
 		}
 		FileHandler fileHandler(pathToDoc);
 
+		/* If the file isn't opened */
 		if (!fileHandler.isOpen()) {
-			http::write(peer, errorResponse());
+			std::string response(documentNotFound());
+			http::write(peer, response);
 			peer.killConn();
 			fileHandler.close();
 			return;

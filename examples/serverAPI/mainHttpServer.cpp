@@ -1,6 +1,6 @@
 #include "TCPserver.hpp"
 #include "TCPclient.hpp"
-#include "serverDB/httpServer.hpp"
+#include "http/httpServer/httpServer.hpp"
 
 
 int main(void)
@@ -12,11 +12,11 @@ int main(void)
 		/* Allocation and instantiation of the server object.
 		** The first argument is the address family; the second is a char* of the address
 		** to bind to, zero for any address. */
-		std::cout << "[+] Preparing the server.\n";
-		server = new net::TCPserver(AF_INET, "127.0.0.1", 8090);
+		std::cout << "[+] Preparing threaded acceptors.\n";
+		server = new net::TCPserver(AF_INET, "127.0.0.1", 50505);
 
 		// Callback of server object is now pointing to the http proxy server function
-		server->codePointer.serverCode = serverDB::httpServer;
+		server->codePointer.serverCode = http::httpServer;
 	}
 	catch (net::SocketException& e) {
 		std::cout << "[MAIN}........\n";

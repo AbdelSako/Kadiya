@@ -24,7 +24,6 @@ SOFTWARE.
 
 #include "TCPserver.hpp"
 #include "SocketException.hpp"
-#include "serverDB/httpProxy2.0.hpp"
 #include <thread>
 
 /*  */
