@@ -31,6 +31,12 @@ SOFTWARE.
 
 #if !defined(__http_handlers)
 #define __http_handlers
+
+#define GET "GET"
+#define POST "POST"
+#define CONNECT "CONNECT"
+#define PUT "PUT"
+
 namespace http
 {
 	static const std::list<std::string> METHODS =
@@ -47,7 +53,6 @@ namespace http
 
 	/* Parses a raw http request */
 	struct requestParser {
-	    //requestParser(void) {};
 		requestParser(std::string rawRequest);
 
 		std::string method;
@@ -60,6 +65,7 @@ namespace http
 		std::string requestBody;
 
 		bool isKeepAlive();
+		std::string getHeader(const std::string& header);
 	};
 
 	/* Parses a raw http response */

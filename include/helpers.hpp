@@ -1,6 +1,7 @@
 #ifndef __helpers
 #define __helpers
 #include <fstream>
+#include <filesystem>
 
 class FileHandler {
 	std::ifstream fileStream;
@@ -65,8 +66,9 @@ public:
 
 /* Used for debugging only */
 void printPath(void) {
-	std::cout << std::filesystem::current_path() << '\n'; // (1)
-	std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
-	std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+	std::cout << "Current path: " << 
+		std::filesystem::current_path() << '\n'; // (1)
+	//std::filesystem::current_path(std::filesystem::temp_directory_path()); // (3)
+	//std::cout << "Current path is " << std::filesystem::current_path() << '\n';
 }
 #endif

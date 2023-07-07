@@ -45,10 +45,10 @@ http::requestParser::requestParser(std::string rawRequest) {
 		requestStream >> this->version;
 
 		//Let's assign the request body
-		if(this->method == "POST")
+		if(this->method == POST)
 			this->requestBody = rawRequest.substr(pos + 4);
 
-		if (this->method == "CONNECT") {
+		if (this->method == CONNECT) {
 			int pos = this->url_or_host.rfind(":");
 			this->hostname = this->url_or_host.substr(0, pos);
 			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
@@ -70,6 +70,10 @@ http::requestParser::requestParser(std::string rawRequest) {
 			headers[header] = headerValue;
 			
 		}
+}
+
+std::string http::requestParser::getHeader(const std::string& header) {
+	return headers[header];
 }
 
 bool http::requestParser::isKeepAlive() {
