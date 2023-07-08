@@ -1,7 +1,7 @@
-#include "http/httpServer/__httpServer.hpp"
+#include "http/http.hpp"
+#include "http/httpServer/httpServerConfig.hpp"
 #include "http/httpServer/httpServer.hpp"
 #include "http/httpServer/httpServerHelpers.hpp"
-#include "http/http.hpp"
 #include "helpers.hpp"
 
 std::ifstream configStream(PROJECT_DIR + SERVER_CONFIG_FILE);
@@ -35,7 +35,6 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 		}
 		else {
 			filename = reqData.url_or_host;
-			//filename.erase(0, 1);
 			pathToDoc.append(filename);
 		}
 		printPath();

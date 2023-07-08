@@ -1,15 +1,25 @@
-#ifndef __httpServer
-#define __httpServer
+/* Configuration settings go here. */
+#ifndef __httpServerConfig
+#define __httpServerConfig
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 
 #define PROJECT_DIR "../../../"
 #define SERVER_CONFIG_FILE (std::string)"httpServerConfig.cfg"
-
+#define PATH_TO_INTERNAL_SERVER_FILES "../../../src/http/httpServer/"
 
 #define DOCUMENT_ROOT (std::string)"Document_Root"
 #define MAX_HOST (std::string)"Max_Host"
+
+#define SERVER "N'Nimba"
+#define HTTP_200 "HTTP/1.1 200 OK"
+#define CONTENT_LENGTH "content-length"
+#define CONTENT_TYPE "content-type"
+#define CONNECTION "connection"
+
+std::string INTERNAL_ERROR = "<html><h1> Some error happened while "
+"N'nimba was trying to open the document</h1></html>\r\n\r\n";
 
 class configKeys {
 public:

@@ -1,20 +1,12 @@
 #ifndef __httpServerHelpers
 #define __httpServerHelpers
+#include "httpServerConfig.hpp"
 #include <iostream>
 #include "helpers.hpp"
 
-std::string INTERNAL_ERROR = "<html><h1> Some error happened while "
-"N'nimba was trying to open the document</h1></html>\r\n\r\n";
-#define PATH_TO_INTERNAL_SERVER_FILES "../../../src/http/httpServer/"
-
-#define SERVER "N'Nimba"
-#define HTTP_200 "HTTP/1.1 200 OK"
-#define CONTENT_LENGTH "content-length"
-#define CONTENT_TYPE "content-type"
-#define CONNECTION "connection"
-
-
 std::string documentNotFound(void);
+
+
 
 class HeaderHandler {
 	const std::string server = SERVER;
