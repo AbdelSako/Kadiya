@@ -8,6 +8,7 @@ class FileHandler {
 	std::string pathToFile;
 	char* buf;
 	unsigned int fileSize;
+	std::string extension;
 	bool isOpened = false;
 
 public:
@@ -16,6 +17,10 @@ public:
 		this->fileStream.open(pathToFile, std::ifstream::binary);
 		this->isOpened = true;
 		buf = new char[1];
+		std::string::size_type pos  = pathToFile.rfind('.');
+		if (pos != std::string::npos)
+			extension = pathToFile.substr(pos + 1);
+		// else extension is empty.
 	}
 	bool isOpen(void) {
 		return this->fileStream.is_open();
@@ -41,6 +46,10 @@ public:
 		this->fileStream.seekg(currentPos);
 		return size;
 	}
+
+	std::string getExtension(void) {
+		return this->extension;
+	}
 	void close() {
 		this->fileStream.close();
 	}
@@ -60,7 +69,7 @@ public:
 	}
 	~FileHandler() {
 		delete[] buf;
-		//this->close();
+		this->close();
 	}
 };
 

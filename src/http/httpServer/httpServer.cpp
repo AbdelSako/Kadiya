@@ -49,27 +49,39 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 			return;
 		}
 
-		/* File ext*/
-		std::string fileExt = filename.substr(filename.rfind(".") + 1);
-		
-		/* file is Opened */
-		HeaderHandler headerHandler;
-		/* +4 for  "\r\n\r\n" */
-		headerHandler.setContentLength(fileHandler.getSize() + 4);
-		headerHandler.setConnection("closed");
-		headerHandler.setContentType(fileExt);
-		std::string header = headerHandler.getHeader();
-		http::write(peer, header);
+		bool isKeepAlive = false;
+		do {
+			HeaderBuilder headerBuilder(reqData, fileHandler.getSize(), fileHandler.getExtension());
+			std::string header = headerBuilder.getHeaders();
+			http::write(peer, header + NL + NL);
 
-		std::string tmp;
-		while (!fileHandler.eof()) {
-			tmp.clear();
-			tmp = fileHandler.getLine() + "\n";
-			http::write(peer, tmp);
-		}
-		/* Send these characters to mark the end of the http transfer. */
-		http::write(peer, "\r\n\r\n"); 
-		fileHandler.close();
+			std::string tmp;
+			while (!fileHandler.eof()) {
+				tmp.clear();
+				tmp = fileHandler.getLine() + "\n";
+				http::write(peer, tmp);
+			}
+			/* Send these characters to mark the end of the http transfer. */
+			http::write(peer, NL + NL);
+
+			std::string con = reqData.getHeader("Connection");
+			if (reqData.getHeader("Connection") == "keep-alive") {
+				isKeepAlive = true;
+				if (!peer.isKeepAlive()) {
+					peer.setKeepAlive(true);
+				}
+			}
+			else {
+				isKeepAlive = false;
+				if (peer.isKeepAlive()) {
+					peer.setKeepAlive(false);
+				}
+			}
+			if (isKeepAlive) {
+				http::read(peer, rawData);
+				reqData = http::requestParser(rawData);
+			}
+		} while (isKeepAlive && !rawData.empty());
 	}
 	peer.killConn();
 

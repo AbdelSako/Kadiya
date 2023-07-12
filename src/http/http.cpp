@@ -27,6 +27,7 @@ SOFTWARE.
 #include <algorithm>
 #include <sstream>
 
+/* ************************************************************************************ */
 /*Request Parser */
 http::requestParser::requestParser(std::string rawRequest) {
 		//std::cout << rawRequest << std::endl;
@@ -67,7 +68,7 @@ http::requestParser::requestParser(std::string rawRequest) {
 			requestStream >> header;
 			header.pop_back();// remove the colon
 			std::getline(requestStream, headerValue, '\r');
-			headers[header] = headerValue;
+			headers[header] = headerValue.erase(0,1); // First ch is a space.
 			
 		}
 }
@@ -92,7 +93,7 @@ bool http::requestParser::isKeepAlive() {
 	}
 }
 
-
+/* ************************************************************************************ */
 /* Response Parser */
 http::responseParser::responseParser
 (const std::string rawResponse)
@@ -159,6 +160,7 @@ bool http::responseParser::isKeepAlive() {
 		return false;
 }
 
+/* ************************************************************************************ */
 /* URL parser */
 http::urlParser::urlParser(std::string fullUrl)
 {
@@ -255,6 +257,26 @@ http::urlParser::urlParser(std::string fullUrl)
 	}
 }
 
+/* ************************************************************************************ */
+http::HeaderBuilder::HeaderBuilder(http::requestParser& request, u_int content_length,
+	std::string content_type) {
+	data.append(HTTP_200 + NL);
+	data.append(SERVER + SERVER_NAME + NL);
+	data.append(CONTENT_LENGTH + std::to_string(content_length) + NL);
+	data.append(CONTENT_TYPE + content_type + NL);
+
+	std::string con = request.getHeader("Connection");
+	if (con.empty()) con = "closed";
+
+	data.append(CONNECTION + request.getHeader("Connection"));
+	//data.append(CONNECTION + "closed" + NL + NL);
+}
+
+std::string http::HeaderBuilder::getHeaders(void) {
+	return data;
+}
+
+/* ************************************************************************************ */
 
 void http::recvUntilRC(net::TCPpeer& tcppeer, std::string& rawrequest)
 {
@@ -290,30 +312,6 @@ bool http::isAllChunk(const std::string rawResponse)
         return false;
     }
 }
-
-
-//TODO: I forgot all about this function
-//short http::recvAll(net::TCPpeer& peer, std::string& rawResponse)
-//{
-//    /* recv first package and check if the chunked encoding is set.
-//    *  if so check if everything's been recv'd.
-//    *  if not, continue recv'ing until... */
-//    http::recvUntilRC(peer, rawResponse);
-//
-//    http::responseParser resinfo(rawResponse);
-//
-//    auto transHead = resinfo.headers.find("Transfer-Encoding");
-//    if(transHead != resinfo.headers.end()) {
-//
-//    }
-//	return -1; //I even forgot the return statement;
-//	//That return statement is just there for me to be able to compile
-//	//this func on windows.
-//	/*
-//	This part of the code compiled on linux but not windows without the return
-//	statement. Although the function was never called.
-//	*/
-//}
 
 int http::read(net::TCPpeer& peer, std::string& rawData) {
 	ssize_t bytes, totalBytes = 0;

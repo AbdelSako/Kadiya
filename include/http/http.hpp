@@ -29,13 +29,22 @@ SOFTWARE.
 #include <list>
 #include "TCPsocket.hpp"
 
+#define SERVER_NAME (std::string)"N'Nimba"
+
 #if !defined(__http_handlers)
 #define __http_handlers
 
-#define GET "GET"
-#define POST "POST"
-#define CONNECT "CONNECT"
-#define PUT "PUT"
+#define GET (std::string)"GET"
+#define POST (std::string)"POST"
+#define CONNECT (std::string)"CONNECT"
+#define PUT (std::string)"PUT"
+
+#define NL (std::string)"\r\n"
+#define HTTP_200 (std::string)"HTTP/1.1 200 OK"
+#define SERVER (std::string)"server: "
+#define CONTENT_LENGTH (std::string)"content-length: "
+#define CONTENT_TYPE (std::string)"content-type: "
+#define CONNECTION (std::string)"connection: "
 
 namespace http
 {
@@ -90,6 +99,15 @@ namespace http
 		std::string host;
 		std::string url;
 		uint16_t port;
+	};
+
+	class HeaderBuilder {
+	private:
+		std::string data;
+	public:
+		HeaderBuilder(requestParser& request, u_int content_length,
+			std::string content_type);
+		std::string getHeaders(void);
 	};
 
 	void recvUntilRC(net::TCPpeer& TCPpeer, std::string& rawRequest);
