@@ -12,6 +12,7 @@ class FileHandler {
 	bool isOpened = false;
 
 public:
+	//FileHandler(void) = default;
 	FileHandler(std::string pathToFile) {
 		this->pathToFile = pathToFile;
 		this->fileStream.open(pathToFile, std::ifstream::binary);

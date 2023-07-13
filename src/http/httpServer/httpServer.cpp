@@ -38,33 +38,39 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 			pathToDoc.append(filename);
 		}
 		printPath();
-		FileHandler fileHandler(pathToDoc);
+		FileHandler* fileHandler;
+		fileHandler = new FileHandler(pathToDoc);
 
 		/* If the file isn't opened */
-		if (!fileHandler.isOpen()) {
+		if (!fileHandler->isOpen()) {
 			std::string response(documentNotFound());
 			http::write(peer, response);
 			peer.killConn();
-			fileHandler.close();
+			delete fileHandler;
 			return;
 		}
 
 		bool isKeepAlive = false;
 		do {
-			HeaderBuilder headerBuilder(reqData, fileHandler.getSize(), fileHandler.getExtension());
+			HeaderBuilder headerBuilder(reqData, fileHandler->getSize(), fileHandler->getExtension());
 			std::string header = headerBuilder.getHeaders();
 			http::write(peer, header + NL + NL);
 
 			std::string tmp;
-			while (!fileHandler.eof()) {
+			while (!fileHandler->eof()) {
 				tmp.clear();
-				tmp = fileHandler.getLine() + "\n";
+				tmp = fileHandler->getLine() + "\n";
 				http::write(peer, tmp);
 			}
 			/* Send these characters to mark the end of the http transfer. */
 			http::write(peer, NL + NL);
 
-			std::string con = reqData.getHeader("Connection");
+
+			//DOTO: Trying to figure how the make the server to allow the all 
+			// request from an HTML file through a single connection instead of
+			// opening and closing a new connection to get all the content of an HTML file
+
+			/*std::string con = reqData.getHeader("Connection");
 			if (reqData.getHeader("Connection") == "keep-alive") {
 				isKeepAlive = true;
 				if (!peer.isKeepAlive()) {
@@ -79,9 +85,11 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 			}
 			if (isKeepAlive) {
 				http::read(peer, rawData);
+				std::cout << "[*] Keep-Alive test: " << rawData << std::endl;
 				reqData = http::requestParser(rawData);
-			}
+			}*/
 		} while (isKeepAlive && !rawData.empty());
+		delete fileHandler;
 	}
 	peer.killConn();
 

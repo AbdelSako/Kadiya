@@ -158,7 +158,7 @@ void net::TCPserver::startThreadedServer(unsigned int maxHost,
     /* Listen */
     this->listen(maxHost);
 
-    auto acceptor = [serverSharedPtr]
+    auto acceptor = [serverSharedPtr](void)
     {
         net::TCPpeer peer;
         while (true) {

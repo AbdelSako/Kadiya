@@ -29,23 +29,31 @@ SOFTWARE.
 #include "__TCPserver.hpp"
 #include "SocketException.hpp"
 #include <vector>
+#include <deque>
 #include <shared_mutex>
 #include <map>
 #include <condition_variable>
 
 #define NUM_OF_THREAD_LISTENER 5
+
 namespace net {
-	class TCPserver;
+	
  }
-/* Code pointers */
-class CodePointer {
-public:
-	CodePointer() = default;
-	void (*serverCode)(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) = nullptr;
-};
 
 namespace net
 {
+	class HostData;
+
+	class TCPserver;
+
+	/* Code pointers */
+	class CodePointer {
+	public:
+		CodePointer() = default;
+		void (*serverCode)(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) = nullptr;
+		void (*storeData)(std::shared_ptr<TCPserver> server, TCPpeer peer, HostData*) = nullptr;
+	};
+
 	/* net::TCPserver Class */
 	class TCPserver: public net::TCPsocket {
 	private:
@@ -71,6 +79,7 @@ namespace net
 		/* Modification */
 		mutable std::shared_mutex fileMutex;
 		std::condition_variable	cv;
+		bool readyToProcess = false;
 		unsigned int numberOfThreads = NUM_OF_THREAD_LISTENER;
 
 		/* End of Modification */
@@ -168,8 +177,34 @@ namespace net
 			return fileMutex;
 		}
 		/********************************* */
-		std::vector<std::string> content;
+		std::deque<HostData*> dataFromThread;
 
+};
+
+class HostData {
+private:
+	std::string host;
+	std::string port;
+	std::string url;
+	std::string data;
+public:
+	HostData(std::string& host, std::string& port, std::string data) {
+		this->host = host;
+		this->port = port;
+		this->data = data;
+	}
+
+	std::string getHost(void) {
+		return host;
+	}
+
+	std::string getPort(void) {
+		return port;
+	}
+
+	std::string getData(void) {
+		return data;
+	}
 };
 
 	/* */
@@ -178,7 +213,6 @@ namespace net
 	/* Default connection handler */
 	void handleConn(net::TCPpeer &peer);
 };
-
 
 
 #endif
