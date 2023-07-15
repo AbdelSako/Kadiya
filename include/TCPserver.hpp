@@ -51,7 +51,7 @@ namespace net
 	public:
 		CodePointer() = default;
 		void (*serverCode)(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) = nullptr;
-		void (*storeData)(std::shared_ptr<TCPserver> server, TCPpeer peer, HostData*) = nullptr;
+		void (*storeData)(std::shared_ptr<TCPserver> server, HostData* hostData) = nullptr;
 	};
 
 	/* net::TCPserver Class */
@@ -65,6 +65,11 @@ namespace net
 		static bool m_shutdownTCPservers;
 		/* This var allow us not to run the startServer method when the server is aleadry running */
 		bool m_serverStarted = false;
+
+		/* Retrieving data from threads */
+		std::condition_variable storeData_cv;
+		std::shared_mutex storeData_mutex;
+		//std::shared_lock locker;
 
 		struct sockaddr_in* peerAddr;
 		struct sockaddr_in6* peerAddr6;
@@ -152,6 +157,7 @@ namespace net
 		** net::wait() Pauses the application, allowing the detached threads to run until a
 		** SIGINT(ctrl-c) is sent to the program.*/
 		void wait(void);
+		bool waitForData(void);
 
 		/* Signal handler */
 		static void signalHandler(int signalNum);
@@ -184,11 +190,11 @@ namespace net
 class HostData {
 private:
 	std::string host;
-	std::string port;
+	u_int port;
 	std::string url;
 	std::string data;
 public:
-	HostData(std::string& host, std::string& port, std::string data) {
+	HostData(std::string& host, u_int& port, std::string data) {
 		this->host = host;
 		this->port = port;
 		this->data = data;
@@ -198,7 +204,7 @@ public:
 		return host;
 	}
 
-	std::string getPort(void) {
+	u_int getPort(void) {
 		return port;
 	}
 

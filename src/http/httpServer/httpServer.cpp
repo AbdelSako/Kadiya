@@ -11,6 +11,9 @@ const std::string DOC_ROOT_DIR(
 	"../../../" + httpServerConfig.getDocument_Root());
 
 /* Function */
+void storeData(std::shared_ptr<net::TCPserver> server, net::HostData* hostData);
+
+int n = 0;
 
 
 void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
@@ -28,6 +31,13 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 		}
 
 		http::requestParser reqData(rawData);
+		net::HostData* hostData = new net::HostData(reqData.hostname, reqData.portNumber,
+			rawData);
+
+		if (n++ <= 3) {
+			server->dataFromThread.push_back(hostData);
+		}
+
 		std::cout << "[+] request: " << reqData.url_or_host << std::endl;
 		if (reqData.url_or_host == "/") {
 			filename = "index.html";
@@ -98,6 +108,10 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 void prepResponseHeader(std::string& resData, HeaderHandler& headers) {
 	resData.clear();
 
+}
+
+void storeData(std::shared_ptr<net::TCPserver> server, net::HostData* hostData) {
+	server->dataFromThread.push_back(hostData);
 }
 
 /* TO-DOs:

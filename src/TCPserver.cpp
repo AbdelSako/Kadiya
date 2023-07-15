@@ -260,3 +260,7 @@ void net::TCPserver::wait(void) {
     TCPserver::m_intSigCond.wait(lock, [] {return TCPserver::m_shutdownTCPservers; });
 }
 
+bool waitForData(void) {
+    return false;
+}
+
