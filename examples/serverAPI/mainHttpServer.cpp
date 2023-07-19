@@ -3,6 +3,8 @@
 #include "http/httpServer/httpServer.hpp"
 
 
+void processData(net::TCPserver server);
+
 
 int main(void)
 {
@@ -34,6 +36,10 @@ int main(void)
 		// Pauses execution until SIGINT is sent from the keyboard.
 		std::cout << "before wait...\n";
 		server->wait();
+		/*int n = 0;
+		while (server->waitForData()) {
+			
+		}*/
 		std::cout << "After wait...\n";
 #ifdef _WIN32
 		WSACleanup();
@@ -54,3 +60,7 @@ int main(void)
 	delete server;
 }
 
+void processData(net::TCPserver &server, int n) {
+	auto data = server.dataFromThread[n];
+	std::cout << data << std::endl;
+}

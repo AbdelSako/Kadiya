@@ -67,9 +67,10 @@ namespace net
 		bool m_serverStarted = false;
 
 		/* Retrieving data from threads */
+		bool dataReady = false;
 		std::condition_variable storeData_cv;
-		std::shared_mutex storeData_mutex;
-		//std::shared_lock locker;
+		std::mutex storeData_mutex;
+		//std::shared_lock locker(storeData_mutex, std::defer_lock);
 
 		struct sockaddr_in* peerAddr;
 		struct sockaddr_in6* peerAddr6;

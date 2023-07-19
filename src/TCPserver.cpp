@@ -260,7 +260,11 @@ void net::TCPserver::wait(void) {
     TCPserver::m_intSigCond.wait(lock, [] {return TCPserver::m_shutdownTCPservers; });
 }
 
-bool waitForData(void) {
-    return false;
+bool net::TCPserver::waitForData(void) {
+   // //std::shared_lock sharedLock(this->storeData_mutex, std::defer_lock);
+   // std::unique_lock lk(this->storeData_mutex);
+   //// this->storeData_cv.wait(lk, [](bool b){return b; });
+   // return true;
+    return 0;
 }
 
