@@ -1,6 +1,8 @@
 #include "TCPserver.hpp"
 #include "TCPclient.hpp"
 #include "http/httpServer/httpServer.hpp"
+#define LISTENERS 5
+#define MAXHOST 20
 
 
 void processData(net::TCPserver server);
@@ -29,18 +31,22 @@ int main(void)
 
 	try {
 		/* returns 0 on success. */
-		std::cout << "[+] Preparing to launch threads\n";
-		server->startThreadedServer(5);
+		std::cout << "[+] Preparing to launch threaded lisneters...\n";
+		server->startThreadedServer(MAXHOST, LISTENERS);
+
+		std::cout << "[+] Server is ready to accept connection from " << LISTENERS << " listeners.\n";
+		std::cout << "[+] And ready to serve a max of " << MAXHOST << " hosts\n";
+		std::cout << "\n[+] Web Document Root is:\n\t\t./Kadiya/www/\n\n";
 
 
 		// Pauses execution until SIGINT is sent from the keyboard.
-		std::cout << "before wait...\n";
+		std::cout << "[dev] before wait...\n";
 		server->wait();
 		/*int n = 0;
 		while (server->waitForData()) {
 			
 		}*/
-		std::cout << "After wait...\n";
+		std::cout << "[dev] After wait...\n";
 #ifdef _WIN32
 		WSACleanup();
 #endif

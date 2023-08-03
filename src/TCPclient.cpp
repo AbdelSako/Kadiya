@@ -107,7 +107,7 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
             break;
      }
 
-     peerInfo.addr = ipstr;
+     peerInfo.addr = ipstr; //TODO: This line causes a runtime error on linux.
      peerInfo.port = port;
      peerInfo.af = m_remoteAddrPtr->ai_family;
      peerInfo.sockfd = m_sockfd;
