@@ -34,6 +34,7 @@ including "winsock2.h" */
 #endif
 
 #include <string>
+#include <cstring>
 #include <csignal>
 
 //#include "__TCPsocket.hpp"
@@ -79,7 +80,9 @@ namespace net
 	public:
 		/* Initializes the object with default flags */
 		TCPsocket(int Family) : addrFamily(Family) {
+#ifdef _WIN32
 			startWSA();
+#endif
 		}
 
 		/* copies a connected tcp socket 
