@@ -20,6 +20,9 @@ namespace net
 		struct PeerInfo* peerInfo;
 	public:
 		TCPclient(void): TCPsocket() {
+#ifdef _WIN32
+			this->startWSA();	
+#endif
 			this->m_hints = new addrinfo;
 			this->m_remoteAddrInfo = new addrinfo;
 			this->m_remoteAddrPtr = new addrinfo;

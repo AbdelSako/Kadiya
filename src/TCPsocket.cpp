@@ -10,19 +10,27 @@
 #include <exception>
 #include <fcntl.h>
 
-
-
-
-/* Definition of net::TCPsocket::socket */
-int net::TCPsocket::socket(void)
-{
 #ifdef _WIN32
+void net::TCPsocket::startWSA(void) {
 	// Initialize Winsock
 	//WSADATA wsaData;
 	this->m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
 	if (this->m_sockResult != 0) {
 		throw net::SocketException("net::TCPsocket::socket(): WSAStartup failed with error:", m_sockResult);
 	}
+}
+
+void net::TCPsocket::cleanWSA(void) {
+	WSACleanup();
+}
+#endif
+
+
+/* Definition of net::TCPsocket::socket */
+int net::TCPsocket::socket(void)
+{
+#ifdef _WIN32
+	net::TCPsocket::startWSA();
 #endif
 	this->m_sockfd = ::socket(this->addrFamily, SOCK_STREAM, 0);
 	if(!this->isValid())

@@ -69,10 +69,17 @@ namespace net
 		/* Hold error code of the most recent operation. */
 		int status;
 
+		/* Windows WSA*/
+#ifdef _WIN32
+// Initialize Winsock
+		void startWSA(void);
+		void cleanWSA(void);
+#endif
 
 	public:
 		/* Initializes the object with default flags */
 		TCPsocket(int Family) : addrFamily(Family) {
+			startWSA();
 		}
 
 		/* copies a connected tcp socket 
