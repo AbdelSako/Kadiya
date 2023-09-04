@@ -54,7 +54,7 @@ net::TCPpeer net::TCPserver::accept(void)
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr,
                                     peerAddrSize);
             addr = (void*)(&peerAddr->sin_addr);
-            port = ::ntohs(peerAddr->sin_port);
+            port = ntohs(peerAddr->sin_port);
             ::inet_ntop(AF_INET, addr, addrstr, addrsize);
             break;
 
@@ -65,7 +65,7 @@ net::TCPpeer net::TCPserver::accept(void)
             remoteSockfd = ::accept(m_sockfd, (struct sockaddr *)peerAddr6,
                                     peerAddrSize);
             addr = (void*)(&peerAddr6->sin6_addr);
-            port = ::ntohs(peerAddr->sin_port);
+            port = ntohs(peerAddr->sin_port);
             ::inet_ntop(AF_INET6, addr, addrstr, addrsize);
             break;
         default:

@@ -119,9 +119,9 @@ namespace http
 
 	void pipePeers(net::TCPpeer& from, net::TCPpeer& to);
 
-	int read(net::TCPpeer& peer, std::string& rawData);
+	ssize_t read(net::TCPpeer& peer, std::string& rawData);
 
-	int write(net::TCPpeer& peer, const std::string& data);
+	ssize_t write(net::TCPpeer& peer, const std::string& data);
 
 };
 

@@ -50,7 +50,7 @@ http::requestParser::requestParser(std::string rawRequest) {
 			this->requestBody = rawRequest.substr(pos + 4);
 
 		if (this->method == CONNECT) {
-			int pos = this->url_or_host.rfind(":");
+			std::string::size_type pos = this->url_or_host.rfind(":");
 			this->hostname = this->url_or_host.substr(0, pos);
 			this->portNumber = std::stoi(this->url_or_host.substr(pos + 1));
 		}
@@ -99,7 +99,7 @@ http::responseParser::responseParser
 (const std::string rawResponse)
 {
 	std::string::size_type n, pos = 0, split;
-	std::vector<size_t> rc;
+	std::vector<std::string::size_type> rc;
 
 	if(rawResponse.empty()) return;
 
@@ -107,15 +107,17 @@ http::responseParser::responseParser
 		split = n;
 	else
 		split = 0;
-
-	while(true) {
-		n = rawResponse.find("\r\n", pos);
-		if(n == std::string::npos) break;
-		pos = n + 1;
-		rc.push_back(n);
-		if(rc.back() == split) break;
-	}
-
+    while(true) { try {
+        n = rawResponse.find("\r\n", pos);
+        if(n == std::string::npos) break;
+        pos = n + 1;
+        rc.push_back((n));
+        if(rc.back() == split) break;
+        } catch(...) {
+            std::cout << "[*] http::responseparser chashed\n";
+            }
+        }
+ 
 	/* version, code and status */
 	if(rc.size() >= 1) {
 		pos = 0;
@@ -313,7 +315,7 @@ bool http::isAllChunk(const std::string rawResponse)
     }
 }
 
-int http::read(net::TCPpeer& peer, std::string& rawData) {
+ssize_t http::read(net::TCPpeer& peer, std::string& rawData) {
 	ssize_t bytes, totalBytes = 0;
 	char tmpBuf[512];
 	rawData.clear();
@@ -335,7 +337,7 @@ int http::read(net::TCPpeer& peer, std::string& rawData) {
 	else return totalBytes;
 }
 
-int http::write(net::TCPpeer& peer, const std::string& data) {
+ssize_t http::write(net::TCPpeer& peer, const std::string& data) {
 	int bytes = peer.send((const char*)data.data(),
 		data.length());
 	return bytes;
