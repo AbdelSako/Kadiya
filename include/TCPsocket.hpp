@@ -188,9 +188,9 @@ namespace net
 		std::string ipAddress;
 		uint16_t portNumber;
 		bool keepAliveStatus = false;
-		u_int DEFAULT_TIMEOUT = 5;
-		u_int recvTimeout = DEFAULT_TIMEOUT;
-		u_int sendTimeout = DEFAULT_TIMEOUT;
+		u_int8_t DEFAULT_TIMEOUT = 5;
+		uint8_t recvTimeout = DEFAULT_TIMEOUT;
+		uint8_t sendTimeout = DEFAULT_TIMEOUT;
 	//	private:
 		    /* Making them inaccessible. */
 		/*	int socket(void) {}
@@ -209,6 +209,11 @@ namespace net
 			return this->DEFAULT_TIMEOUT;
 			
 		}
+        /* Set bufSize */
+        void setBufSize(uint16_t bufSize);
+        
+        /* gwt bufSize*/
+        uint16_t getBufSize(void);
 		/* Set recv timeout*/
 		void setRecvTimeout(u_int timeout);
 
@@ -235,10 +240,10 @@ namespace net
 		bool isKeepAlive();
 
 		/* RECEIVE METHOD*/
-		int recv(char* inBuffer, uint16_t inBufSize);
+		ssize_t recv(char* inBuffer, uint16_t inBufSize);
 
 		/* send method*/
-		int send(const char* outBuffer, uint16_t outBufSize);
+		ssize_t send(const char* outBuffer, uint16_t outBufSize);
 
 		/**/
 		std::string getPeerAddr(void);

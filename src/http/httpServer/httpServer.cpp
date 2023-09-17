@@ -23,7 +23,7 @@ void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer)
 
 	int inStatus, outStatus;
 	std::string rawData;
-	if (inStatus = http::read(peer, rawData)) {
+	if (inStatus = http::read(peer, rawData, 1024)) {
 		/* Dont waste your time if the request is empty. */
 		if (rawData.empty()) {
 			peer.killConn();

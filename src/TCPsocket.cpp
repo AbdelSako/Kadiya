@@ -218,8 +218,9 @@ void net::TCPsocket::setNonBlocking(bool nonBlocking)
 
 
 /* NEW RECEIVE METHOD */
-int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
+ssize_t net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 {
+    this->setStatus(0);
 	ssize_t byteRecv;
 
 	std::memset(inBuffer, 0, inBufSize);
@@ -227,11 +228,13 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 	if (!this->isBlocking())
 		this->recvPoll(this->recvTimeout);
 
-	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
-	//byteRecv = ::read(m_sockfd, inBuffer, inBufSize - 12);
-	if (byteRecv == -1)
-		//this->m_sockResult = -1;
-		this->setStatus(this->getLastError());
+	//byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
+	byteRecv = ::read(m_sockfd, inBuffer, inBufSize);
+    if (byteRecv == -1) {
+        //Set status and byteRecv to 0; to 0 because of the return value
+        this->setStatus(this->getLastError());
+        byteRecv = 0;
+    }
 
 	//TODO: I wonder is this method should throw an Exception.
 	/*if (this->getLastError() != 0) {
@@ -243,7 +246,7 @@ int net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 }
 
 /* SEND METHOD*/
-int net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
+ssize_t net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
 {
 	ssize_t byteSent;
 	if (!this->isBlocking())
