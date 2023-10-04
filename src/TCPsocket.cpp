@@ -11,7 +11,7 @@
 #include <fcntl.h>
 
 #ifdef _WIN32
-void net::TCPsocket::startWSA(void) {
+void net::Socket::startWSA(void) {
 	// Initialize Winsock
 	//WSADATA wsaData;
 	this->m_sockResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
@@ -20,17 +20,17 @@ void net::TCPsocket::startWSA(void) {
 	}
 }
 
-void net::TCPsocket::cleanWSA(void) {
+void net::Socket::cleanWSA(void) {
 	WSACleanup();
 }
 #endif
 
 
 /* Definition of net::TCPsocket::socket */
-int net::TCPsocket::socket(void)
+int net::Socket::socket(void)
 {
 #ifdef _WIN32
-	net::TCPsocket::startWSA();
+	net::Socket::startWSA();
 #endif
 	this->m_sockfd = ::socket(this->addrFamily, SOCK_STREAM, 0);
 	if(!this->isValid())
@@ -55,7 +55,7 @@ int net::TCPsocket::socket(void)
 
 
 /* Definition of net::TCPsocket::bind */
-int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
+int net::Socket::bind(const char *bindAddr, uint16_t port)
 
 {
 	int inet_pton_result;
@@ -117,7 +117,7 @@ int net::TCPsocket::bind(const char *bindAddr, uint16_t port)
 }
 
 /* POLL METHOD ___________________*/
-void net::TCPpeer::recvPoll(u_int timeout)
+void net::PeerSocket::recvPoll(u_int timeout)
 {
 #ifdef _WIN32
 	int nfds = 1;
@@ -152,7 +152,7 @@ void net::TCPpeer::recvPoll(u_int timeout)
 }
 
 /* SEND POLL */
-void net::TCPpeer::sendPoll(u_int timeout) {
+void net::PeerSocket::sendPoll(u_int timeout) {
 #ifdef _WIN32
 	int nfds = 1;
 	fd_set writefds;
@@ -191,7 +191,7 @@ void net::TCPpeer::sendPoll(u_int timeout) {
 }
 
 /* Definition of net::TCPsocket::setNonBlocking */
-void net::TCPsocket::setNonBlocking(bool nonBlocking)
+void net::Socket::setNonBlocking(bool nonBlocking)
 {
 #ifdef _WIN32
 	//Winsock doesn't provide a way to check if blocking or non-blocking is set.
@@ -218,7 +218,7 @@ void net::TCPsocket::setNonBlocking(bool nonBlocking)
 
 
 /* NEW RECEIVE METHOD */
-ssize_t net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
+ssize_t net::PeerSocket::recv(char* inBuffer, uint16_t inBufSize)
 {
     this->setStatus(0);
 	ssize_t byteRecv;
@@ -246,7 +246,7 @@ ssize_t net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 }
 
 /* SEND METHOD*/
-ssize_t net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
+ssize_t net::PeerSocket::send(const char* outBuffer, uint16_t outBufSize)
 {
 	ssize_t byteSent;
 	if (!this->isBlocking())
@@ -267,17 +267,17 @@ ssize_t net::TCPpeer::send(const char* outBuffer, uint16_t outBufSize)
 }
 
 /*  SET RECV TIMEOUT */
-void net::TCPpeer::setRecvTimeout(u_int timeout) {
+void net::PeerSocket::setRecvTimeout(u_int timeout) {
 	this->recvTimeout = timeout;
 }
 
 /* SET SEND TIMEOUT */
-void net::TCPpeer::setSendTimeout(u_int timeout) {
+void net::PeerSocket::setSendTimeout(u_int timeout) {
 	this->sendTimeout = timeout;
 }
 
 /* GET LAST ERROR METHOOD*/
-int net::TCPsocket::getLastError(void) {
+int net::Socket::getLastError(void) {
 #ifdef _WIN32
 	return WSAGetLastError();
 #else
@@ -285,14 +285,14 @@ int net::TCPsocket::getLastError(void) {
 #endif
 }
 
-bool net::TCPpeer::isBlocking(void) {
+bool net::PeerSocket::isBlocking(void) {
 	/* TODO: This method will be implemented later, for now let's just return true */
 	return this->m_isBlocking;
 }
 
 
 /* */
-int net::TCPsocket::shutdown(int how)
+int net::Socket::shutdown(int how)
 {
 	if(isValid()) {
 		if(::shutdown(m_sockfd, how) == -1)
@@ -304,7 +304,7 @@ int net::TCPsocket::shutdown(int how)
 }
 
 /* CLOSE socket(net::SOCKET) */
-int net::TCPsocket::close(void)
+int net::Socket::close(void)
 {
 	if (isValid()) {
 #ifdef _WIN32
@@ -327,17 +327,17 @@ int net::TCPsocket::close(void)
 //    return *peerInfo;
 //}
 
-std::string net::TCPpeer::getPeerAddr(void) {
+std::string net::PeerSocket::getPeerAddr(void) {
 	return this->ipAddress;
 }
-uint32_t net::TCPpeer::getPeerPort(void) {
+uint32_t net::PeerSocket::getPeerPort(void) {
 	return this->portNumber;
 }
 
 
 
 /* keep alive */
-int net::TCPpeer::setKeepAlive(bool keep_alive)
+int net::PeerSocket::setKeepAlive(bool keep_alive)
 {
 #ifdef _WIN32
 	const char optval = (int)keep_alive;
@@ -370,12 +370,12 @@ int net::TCPpeer::setKeepAlive(bool keep_alive)
 }
 
 /* Get Keep Alive Status */
-bool net::TCPpeer::isKeepAlive() {
+bool net::PeerSocket::isKeepAlive() {
 	return this->keepAliveStatus;
 }
 
 /* Available to read */
-int net::TCPsocket::availToRead() {
+int net::Socket::availToRead() {
 	u_long value;
 	int reio = ::ioctl(this->m_sockfd, FIONREAD, &value);
 	if (reio == 0)
@@ -384,10 +384,10 @@ int net::TCPsocket::availToRead() {
 		throw net::SocketException("net::TCPsocket::availToRead()", this->getLastError());
 }
 
-int net::TCPsocket::getStatus(void) {
+int net::Socket::getStatus(void) {
 	return status;
 }
 
-void net::TCPsocket::setStatus(int status) {
+void net::Socket::setStatus(int status) {
 	this->status = status;
 }

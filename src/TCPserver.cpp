@@ -8,26 +8,26 @@
 #include <thread>
 
 /*  */
-uint16_t net::TCPserver::serverInstances = 0;
-std::condition_variable net::TCPserver::m_intSigCond;
-bool net::TCPserver::m_shutdownTCPservers = false;
+uint16_t net::ServerSocket::serverInstances = 0;
+std::condition_variable net::ServerSocket::m_intSigCond;
+bool net::ServerSocket::m_shutdownTCPservers = false;
 
 /* LISTEN FOR INCOMING CONNECTION */
-int net::TCPserver::listen(uint16_t maxHost)  
+int net::ServerSocket::listen(uint16_t maxHost)  
 {
      if(!isValid()) {
           errno = EBADF;
           throw net::SocketException("listen()", errno);
      }
 
-     if(::listen(TCPsocket::m_sockfd, maxHost) == -1) {
+     if(::listen(Socket::m_sockfd, maxHost) == -1) {
           throw net::SocketException("listen()", errno);
      }
      else return 0;
 }
 
 /* ACCEPT INCOMING CONNECTION */
-net::TCPpeer net::TCPserver::accept(void)
+net::PeerSocket net::ServerSocket::accept(void)
 {
      if(!isValid()) {
           errno = EBADF;
@@ -87,21 +87,21 @@ net::TCPpeer net::TCPserver::accept(void)
         peerInfo->port = port;
         peerInfo->af = this->addrFamily;
         peerInfo->sockfd = remoteSockfd;
-        net::TCPpeer peer = net::TCPpeer(*peerInfo);
+        net::PeerSocket peer = net::PeerSocket(*peerInfo);
         delete addrstr;
         return peer;
 
     }
 }
 /* ***************************************************** */
-void net::TCPserver::startServer(uint32_t maxHost) {
-    std::signal(SIGINT, TCPserver::signalHandler);
+void net::ServerSocket::startServer(uint32_t maxHost) {
+    std::signal(SIGINT, ServerSocket::signalHandler);
     this->m_serverStarted = true;
     //this->serverCode = serverDB::httpProxyServer;
-    net::TCPpeer peer;
+    net::PeerSocket peer;
     this->listen(maxHost);
     std::cout << "[+] Server is ready to accept peers on port " << this->serverPort << std::endl;
-    std::shared_ptr<net::TCPserver> serverSharedPtr(this);
+    std::shared_ptr<net::ServerSocket> serverSharedPtr(this);
     while (true) {
         peer = this->accept();
         this->serverCode(peer);
@@ -121,7 +121,7 @@ void net::TCPserver::startServer(uint32_t maxHost) {
 
     Before running the startServer() method, you first need to point the member function pointer
     void (*server)(TCPpeer &peer) of this server object to your server code. */
-void net::TCPserver::startThreadedServer(unsigned int maxHost,
+void net::ServerSocket::startThreadedServer(unsigned int maxHost,
     unsigned int numberOfThreads)
 {
     this->numberOfThreads = numberOfThreads;
@@ -130,10 +130,10 @@ void net::TCPserver::startThreadedServer(unsigned int maxHost,
     if (numberOfThreads == 0) return;
 
     /* signal handler */
-    std::signal(SIGINT, TCPserver::signalHandler);
-    std::signal(SIGPIPE, TCPserver::signalHandler);
+    std::signal(SIGINT, ServerSocket::signalHandler);
+    std::signal(SIGPIPE, ServerSocket::signalHandler);
 
-    std::shared_ptr<net::TCPserver> serverSharedPtr(this);
+    std::shared_ptr<net::ServerSocket> serverSharedPtr(this);
     
 
     /* Listen */
@@ -141,7 +141,7 @@ void net::TCPserver::startThreadedServer(unsigned int maxHost,
 
     auto acceptor = [serverSharedPtr](void)
     {
-        net::TCPpeer peer;
+        net::PeerSocket peer;
         while (true) {
             try
             {
@@ -191,17 +191,17 @@ void net::TCPserver::startThreadedServer(unsigned int maxHost,
 
 
 /*Check if the server is running */
-bool net::TCPserver::hasStarted(void)
+bool net::ServerSocket::hasStarted(void)
 {
 	return m_serverStarted;
 }
 
-bool net::TCPserver::hasToShutdown(void)
+bool net::ServerSocket::hasToShutdown(void)
 {
 	return m_shutdownTCPservers;
 }
 
-void net::TCPserver::signalHandler(int signalNum)
+void net::ServerSocket::signalHandler(int signalNum)
 {
     /* Just one broken connection; we can continue. */
 	if(signalNum == SIGPIPE) {
@@ -223,25 +223,25 @@ void net::TCPserver::signalHandler(int signalNum)
 	}
 }
 
-void net::TCPserver::defaultResponse(net::TCPpeer& peer) {
+void net::ServerSocket::defaultResponse(net::PeerSocket& peer) {
     std::string msg("[+] This is a default response, you wirte your onw code.\n");
     msg.append("[+] Don't modify this function.\n");
     peer.send(msg.data(), msg.size());
 }
 
-void net::handleConn(net::TCPpeer &peer)
+void net::handleConn(net::PeerSocket &peer)
 {
     
 }
 
 /* wait method */
-void net::TCPserver::wait(void) {
+void net::ServerSocket::wait(void) {
     std::mutex m;
     std::unique_lock<std::mutex> lock(m);
-    TCPserver::m_intSigCond.wait(lock, [] {return TCPserver::m_shutdownTCPservers; });
+    ServerSocket::m_intSigCond.wait(lock, [] {return ServerSocket::m_shutdownTCPservers; });
 }
 
-bool net::TCPserver::waitForData(void) {
+bool net::ServerSocket::waitForData(void) {
    // //std::shared_lock sharedLock(this->storeData_mutex, std::defer_lock);
    // std::unique_lock lk(this->storeData_mutex);
    //// this->storeData_cv.wait(lk, [](bool b){return b; });

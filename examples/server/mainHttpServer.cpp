@@ -5,20 +5,20 @@
 #define MAXHOST 20
 
 
-void processData(net::TCPserver server);
+void processData(net::ServerSocket server);
 
 
 int main(void)
 {
 	// Server object pointer.
-	net::TCPserver* server;
+	net::ServerSocket* server;
 
 	try {
 		/* Allocation and instantiation of the server object.
 		** The first argument is the address family; the second is a char* of the address
 		** to bind to, zero for any address. */
 		std::cout << "[+] Preparing threaded acceptors.\n";
-		server = new net::TCPserver(AF_INET, "127.0.0.1", 50505);
+		server = new net::ServerSocket(AF_INET, "127.0.0.1", 50505);
 
 		// Callback of server object is now pointing to the http proxy server function
 		server->codePointer.serverCode = http::httpServer;
@@ -66,7 +66,7 @@ int main(void)
 	delete server;
 }
 
-void processData(net::TCPserver &server, int n) {
+void processData(net::ServerSocket &server, int n) {
 	auto data = server.dataFromThread[n];
 	std::cout << data << std::endl;
 }

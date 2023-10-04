@@ -9,7 +9,7 @@
 
 /* CONNECT TO REMOTE HOST.
 the string "remoteAddr" could be a domain name or IPv4/IPv6 address */
-net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port)
+net::PeerSocket net::ClientSocket::connect(const std::string remoteAddr, uint16_t port)
 {
     struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
     struct net::PeerInfo peerInfo;
@@ -30,7 +30,7 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
     	 std::cout << "[*] net::TCPclient::connect() --> ::getadddrinfo(): "
     			 <<::gai_strerror(gai_ret) << "; " << remoteAddr << ":"
     			 << port << '\n';
-    	 return TCPpeer(peerInfo);
+    	 return PeerSocket(peerInfo);
      }
 
      struct pollfd pollfds[1];
@@ -63,7 +63,7 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
      if(m_remoteAddrPtr == NULL){
           //errno = ESOCKTNOSUPPORT;
          throw net::SocketException("[*] Connect Failed: ", this->getLastError());
-          return TCPpeer(peerInfo);
+          return PeerSocket(peerInfo);
      }
 
      /* The following lines, extract info of the remote address and store them in human readable in
@@ -98,5 +98,5 @@ net::TCPpeer net::TCPclient::connect(const std::string remoteAddr, uint16_t port
      
      /* TODO: CREATE TWO METHODS, "isValid()" and "getSocket()", and then this mothod could be turned into
      a void method. */
-     return TCPpeer(peerInfo);
+     return PeerSocket(peerInfo);
 }

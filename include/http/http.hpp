@@ -110,18 +110,18 @@ namespace http
 		std::string getHeaders(void);
 	};
 
-	void recvUntilRC(net::TCPpeer& TCPpeer, std::string& rawRequest);
+	void recvUntilRC(net::PeerSocket& TCPpeer, std::string& rawRequest);
 
     /* RawResponse might contain multiple LF */
 	bool isAllChunk(const std::string rawResponse);
 
-	short recvAll(net::TCPpeer& peer, std::string& rawResponse);
+	short recvAll(net::PeerSocket& peer, std::string& rawResponse);
 
-	void pipePeers(net::TCPpeer& from, net::TCPpeer& to);
+	void pipePeers(net::PeerSocket& from, net::PeerSocket& to);
 
-	ssize_t read(net::TCPpeer& peer, std::string& rawData, const uint16_t bufsize);
+	ssize_t read(net::PeerSocket& peer, std::string& rawData, const uint16_t bufsize);
 
-	ssize_t write(net::TCPpeer& peer, const std::string& data);
+	ssize_t write(net::PeerSocket& peer, const std::string& data);
 
 };
 

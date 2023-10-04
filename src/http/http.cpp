@@ -280,7 +280,7 @@ std::string http::HeaderBuilder::getHeaders(void) {
 
 /* ************************************************************************************ */
 
-void http::recvUntilRC(net::TCPpeer& tcppeer, std::string& rawrequest)
+void http::recvUntilRC(net::PeerSocket& tcppeer, std::string& rawrequest)
 {
 	char tempbuf[512];
 	rawrequest.clear();
@@ -315,7 +315,7 @@ bool http::isAllChunk(const std::string rawResponse)
     }
 }
 
-ssize_t http::read(net::TCPpeer& peer, std::string& rawData, uint16_t bufsize) {
+ssize_t http::read(net::PeerSocket& peer, std::string& rawData, uint16_t bufsize) {
 	ssize_t bytes, totalBytes = 0;
 	//char tmpBuf[bufsize];
 	char *tmpBuf = new char[bufsize + 1];
@@ -340,7 +340,7 @@ ssize_t http::read(net::TCPpeer& peer, std::string& rawData, uint16_t bufsize) {
 	else return totalBytes;
 }
 
-ssize_t http::write(net::TCPpeer& peer, const std::string& data) {
+ssize_t http::write(net::PeerSocket& peer, const std::string& data) {
 	ssize_t bytes = peer.send((const char*)data.data(),
 		data.length());
 	return bytes;

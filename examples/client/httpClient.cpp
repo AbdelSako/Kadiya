@@ -4,16 +4,16 @@
 /* Print response headers */
 using namespace std;
 void printHeaders(const http::responseParser& resInfo);
-void httpRead(net::TCPpeer& peer, std::string& data);
+void httpRead(net::PeerSocket& peer, std::string& data);
 
 int main(void) //(int argc, char *argv[])
-{
+{ /* START */
 
 	int port = 80;
 	std::string host = "www.google.com";
 
-	net::TCPclient client;
-	net::TCPpeer peer;
+	net::ClientSocket client;
+	net::PeerSocket peer;
     // Connecting to host.
 	peer = client.connect(host, port);
 
@@ -37,7 +37,7 @@ int main(void) //(int argc, char *argv[])
     cout << res << endl;
     
 	peer.killConn();
-}
+}/* END */
 
 void printHeaders(const http::responseParser& resInfo) {
     // Access the struct's data (http::responseParser)
@@ -50,7 +50,7 @@ void printHeaders(const http::responseParser& resInfo) {
     }
 }
 
-void httpRead(net::TCPpeer& peer, std::string& data) {
+void httpRead(net::PeerSocket& peer, std::string& data) {
     //recv small amount of and check on the header.
     string::size_type pos1 = string::npos, pos2, pos3;
     uint16_t bytes = 0, totalBytes = 0;
@@ -114,7 +114,12 @@ void httpRead(net::TCPpeer& peer, std::string& data) {
         pos2 = data.find("\r\n", pos1);
         if(pos2 != string::npos) {
             hexVal = data.substr(pos1, pos2 - pos1);
-            chunkedSize = stoi(hexVal, 0, 16);
+            try {
+                chunkedSize = stoi(hexVal, 0, 16);
+            }
+            catch (...) {
+                chunkedSize = 0;
+            }
             ptr = data.data() + pos2 + 2;
             ptrSize = strlen(ptr);
         }

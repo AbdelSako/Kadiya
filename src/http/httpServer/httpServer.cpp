@@ -11,12 +11,12 @@ const std::string DOC_ROOT_DIR(
 	"../../../" + httpServerConfig.getDocument_Root());
 
 /* Function */
-void storeData(std::shared_ptr<net::TCPserver> server, net::HostData* hostData);
+void storeData(std::shared_ptr<net::ServerSocket> server, net::HostData* hostData);
 
 int n = 0;
 
 
-void http::httpServer(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) {
+void http::httpServer(std::shared_ptr<net::ServerSocket> server, net::PeerSocket peer) {
 	std::ifstream fileStreamToServe;
 	std::string filename;
 	std::string pathToDoc(DOC_ROOT_DIR);
@@ -110,7 +110,7 @@ void prepResponseHeader(std::string& resData, HeaderHandler& headers) {
 
 }
 
-void storeData(std::shared_ptr<net::TCPserver> server, net::HostData* hostData) {
+void storeData(std::shared_ptr<net::ServerSocket> server, net::HostData* hostData) {
 	server->dataFromThread.push_back(hostData);
 }
 

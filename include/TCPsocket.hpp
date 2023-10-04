@@ -49,107 +49,111 @@ namespace net
 		uint32_t sockfd;
 	};
 
-    typedef int SOCKET;
+	typedef int SOCKET;
 
-	class TCPsocket
-	{
-	protected:
-		// Class variables
+	class Socket;
+	class PeerSocket;
+}
+
+class net::Socket
+{
+protected:
+	// Class variables
 #ifdef _WIN32
-		WSADATA m_wsaData;
+	WSADATA m_wsaData;
 #endif
-		int addrFamily;
-		uint8_t sockProtocol;
-		SOCKET m_sockfd = -1;
-		int m_sockResult;
-		bool m_isBlocking = true;
+	int addrFamily;
+	uint8_t sockProtocol;
+	SOCKET m_sockfd = -1;
+	int m_sockResult;
+	bool m_isBlocking = true;
 
-		struct sockaddr_in *m_localSockAddr;
-		struct sockaddr_in6 *m_localSockAddr6;
+	struct sockaddr_in *m_localSockAddr;
+	struct sockaddr_in6 *m_localSockAddr6;
 
-		/* Hold error code of the most recent operation. */
-		int status;
+	/* Hold error code of the most recent operation. */
+	int status;
 
-		/* Windows WSA*/
+	/* Windows WSA*/
 #ifdef _WIN32
 // Initialize Winsock
-		void startWSA(void);
-		void cleanWSA(void);
+	void startWSA(void);
+	void cleanWSA(void);
 #endif
 
-	public:
-		/* Initializes the object with default flags */
-		TCPsocket(int Family) : addrFamily(Family) {
+public:
+	/* Initializes the object with default flags */
+	Socket(int Family) : addrFamily(Family) {
 #ifdef _WIN32
-			startWSA();
+		startWSA();
 #endif
-		}
+	}
 
-		/* copies a connected tcp socket 
-			We will instantiate the TCPpeer class */
-		TCPsocket(void) {}
+	/* copies a connected tcp socket 
+		We will instantiate the TCPpeer class */
+	Socket(void) {}
 
-		/* Shuts down and closes the socket */
-		~TCPsocket(void) {
-			/* TODO: Don't use this destructor to close connections, use the TCPpeer 
-				child class instead. 
-				Not sure what to do with this section yet.*/
-		}
+	/* Shuts down and closes the socket */
+	~Socket(void) {
+		/* TODO: Don't use this destructor to close connections, use the TCPpeer 
+			child class instead. 
+			Not sure what to do with this section yet.*/
+	}
 
-	protected:
-		/* Initializes the socket fd */
-		virtual int socket(void);
+protected:
+	/* Initializes the socket fd */
+	virtual int socket(void);
 
-		/* binds to host:port
-			* int 0 to bind to any address*/
-		virtual int bind(const char *bindAddr, uint16_t port) ;
+	/* binds to host:port
+		* int 0 to bind to any address*/
+	virtual int bind(const char *bindAddr, uint16_t port) ;
 
-	private:
+private:
 
-		/* This function is a callee of operator>>.
-		** Reads data from a connected host.*/
-		//int read(char *inBuffer, uint16_t inBufSize, int timeout);
+	/* This function is a callee of operator>>.
+	** Reads data from a connected host.*/
+	//int read(char *inBuffer, uint16_t inBufSize, int timeout);
 			
-		/* This function is a callee of operator<<.
-		** Writes data to a connected host.*/
-		//int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
+	/* This function is a callee of operator<<.
+	** Writes data to a connected host.*/
+	//int write(const std::string outBuffer, uint16_t outBufSize, int timeout);
 
-	public:
-		/*   */
-		/* Blocking*/
-		void setNonBlocking(bool non_block);
+public:
+	/*   */
+	/* Blocking*/
+	void setNonBlocking(bool non_block);
 
-        /* Shuts down the socket's read, write or both functions.
-        *  Arguments:
-            (how)
-                4: to shutdown read.
-                2: to shutdown write.
-                0:  both
-        *  Return value:
-            -1: If it fails or the socket is invalid
-                0: On success*/
-		int shutdown(int how);
+    /* Shuts down the socket's read, write or both functions.
+    *  Arguments:
+        (how)
+            4: to shutdown read.
+            2: to shutdown write.
+            0:  both
+    *  Return value:
+        -1: If it fails or the socket is invalid
+            0: On success*/
+	int shutdown(int how);
 
-		/* Close this socket fd */
-		int close(void);
+	/* Close this socket fd */
+	int close(void);
 
-    public:
-		/* checks whether the socket is valid or not */
-		bool isValid(void) const {
-			return m_sockfd != -1;
-		}
+public:
+	/* checks whether the socket is valid or not */
+	bool isValid(void) const {
+		return m_sockfd != -1;
+	}
 
-		/* Check for error after an operation */
-		int getLastError(void);
+	/* Check for error after an operation */
+	int getLastError(void);
 
-		/* Data available to be read */
-		int availToRead();
+	/* Data available to be read */
+	int availToRead();
 
-		/* Get Socket Status. */
-		int getStatus(void);
-	protected:
-		void setStatus(int status);
-	public:
+	/* Get Socket Status. */
+	int getStatus(void);
+protected:
+	void setStatus(int status);
+public:
 };
 
 
@@ -157,106 +161,105 @@ namespace net
 
 
 
-	// CLASS
-	/* net::TCPpeer takes a connected socket as an argument */
-	class TCPpeer: public TCPsocket
-	{
-	public:
+// CLASS
+/* net::TCPpeer takes a connected socket as an argument */
+class net::PeerSocket: public net::Socket
+{
+public:
 
-		TCPpeer(struct net::PeerInfo peerInfo) {
-			this->ipAddress = peerInfo.addr;
-			this->portNumber = peerInfo.port;
-			this->addrFamily = peerInfo.af;
-			this->m_sockfd = peerInfo.sockfd;
+	PeerSocket(struct net::PeerInfo peerInfo) {
+		this->ipAddress = peerInfo.addr;
+		this->portNumber = peerInfo.port;
+		this->addrFamily = peerInfo.af;
+		this->m_sockfd = peerInfo.sockfd;
 
-		}
+	}
 
-		TCPpeer(void) {
-			this->m_sockfd = -1;
-		}
+	PeerSocket(void) {
+		this->m_sockfd = -1;
+	}
 
-		~TCPpeer(void) {
-			//this->killConn();
-			/* TODO: This desturctor is executed after the TCPserver::accept() 
-			call returns* to one of the start(start(), startServer()) methods. 
-			To make this work. I will have to make TCPserver::accept() method return 
-			a pointer type insterad of a native type. */
-		}
+	~PeerSocket(void) {
+		//this->killConn();
+		/* TODO: This desturctor is executed after the TCPserver::accept() 
+		call returns* to one of the start(start(), startServer()) methods. 
+		To make this work. I will have to make TCPserver::accept() method return 
+		a pointer type insterad of a native type. */
+	}
 
 
-	private:
-		std::string ipAddress;
-		uint16_t portNumber;
-		bool keepAliveStatus = false;
-		uint8_t DEFAULT_TIMEOUT = 5;
-		uint8_t recvTimeout = DEFAULT_TIMEOUT;
-		uint8_t sendTimeout = DEFAULT_TIMEOUT;
-	//	private:
-		    /* Making them inaccessible. */
-		/*	int socket(void) {}
-			int bind(const char *bindAddr, uint16_t port) {} */
-			/*  */
-		void recvPoll(u_int timeout);
+private:
+	std::string ipAddress;
+	uint16_t portNumber;
+	bool keepAliveStatus = false;
+	uint8_t DEFAULT_TIMEOUT = 5;
+	uint8_t recvTimeout = DEFAULT_TIMEOUT;
+	uint8_t sendTimeout = DEFAULT_TIMEOUT;
+//	private:
+		/* Making them inaccessible. */
+	/*	int socket(void) {}
+		int bind(const char *bindAddr, uint16_t port) {} */
+		/*  */
+	void recvPoll(u_int timeout);
 
-		/* Send poll*/
-		void sendPoll(u_int timeout);
+	/* Send poll*/
+	void sendPoll(u_int timeout);
 
-	public:
-		struct net::PeerInfo getPeerInfo(void);
+public:
+	struct net::PeerInfo getPeerInfo(void);
 
-		/* Get default timeout */
-		u_int getDefaultTimeout(void) {
-			return this->DEFAULT_TIMEOUT;
+	/* Get default timeout */
+	u_int getDefaultTimeout(void) {
+		return this->DEFAULT_TIMEOUT;
 			
-		}
-        /* Set bufSize */
-        void setBufSize(uint16_t bufSize);
+	}
+    /* Set bufSize */
+    void setBufSize(uint16_t bufSize);
         
-        /* gwt bufSize*/
-        uint16_t getBufSize(void);
-		/* Set recv timeout*/
-		void setRecvTimeout(u_int timeout);
+    /* gwt bufSize*/
+    uint16_t getBufSize(void);
+	/* Set recv timeout*/
+	void setRecvTimeout(u_int timeout);
 
-		/* Get recv timeout */
-		int getRecvTimeout(void) {
-			return recvTimeout;
-		}
+	/* Get recv timeout */
+	int getRecvTimeout(void) {
+		return recvTimeout;
+	}
 
-		/*  Set send timeout */
-		void setSendTimeout(u_int timeout);
+	/*  Set send timeout */
+	void setSendTimeout(u_int timeout);
 
-		/* get send timeout */
-		int getSendTimeout(void) {
-			return sendTimeout;
-		}
+	/* get send timeout */
+	int getSendTimeout(void) {
+		return sendTimeout;
+	}
 
-		/* is the socket in blocking mode */
-		bool isBlocking(void);
+	/* is the socket in blocking mode */
+	bool isBlocking(void);
 
-		/* enable KEEP-ALIVE */
-		int setKeepAlive(bool keep_alive);
+	/* enable KEEP-ALIVE */
+	int setKeepAlive(bool keep_alive);
 
-		/* Get keep Alive */
-		bool isKeepAlive();
+	/* Get keep Alive */
+	bool isKeepAlive();
 
-		/* RECEIVE METHOD*/
-		ssize_t recv(char* inBuffer, uint16_t inBufSize);
+	/* RECEIVE METHOD*/
+	ssize_t recv(char* inBuffer, uint16_t inBufSize);
 
-		/* send method*/
-		ssize_t send(const char* outBuffer, uint16_t outBufSize);
+	/* send method*/
+	ssize_t send(const char* outBuffer, uint16_t outBufSize);
 
-		/**/
-		std::string getPeerAddr(void);
+	/**/
+	std::string getPeerAddr(void);
 
-		/**/
-		uint32_t getPeerPort(void);
+	/**/
+	uint32_t getPeerPort(void);
 
-		/* Shut down and close connection */
-		void killConn(void) {
-			this->shutdown(0);
-			this->close();
-		}
-	};
-
+	/* Shut down and close connection */
+	void killConn(void) {
+		this->shutdown(0);
+		this->close();
+	}
 };
+
 #endif

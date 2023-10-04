@@ -25,151 +25,159 @@ namespace net
 {
 	class HostData;
 
-	class TCPserver;
+	class ServerSocket;
+	class CodePointer;
+	void TCPserverThreadCore(std::shared_ptr<net::ServerSocket> _server);
 
-	/* Code pointers */
-	class CodePointer {
-	public:
-		CodePointer() = default;
-		void (*serverCode)(std::shared_ptr<net::TCPserver> server, net::TCPpeer peer) = nullptr;
-		void (*storeData)(std::shared_ptr<TCPserver> server, HostData* hostData) = nullptr;
-	};
+	/* Default connection handler */
+	void handleConn(net::PeerSocket& peer);
+	class HostData;
+};
 
-	/* net::TCPserver Class */
-	class TCPserver: public net::TCPsocket {
-	private:
-		/* Object's count */
-		static uint16_t serverInstances;
+/* Code pointers */
+class net::CodePointer {
+public:
+	CodePointer() = default;
+	void (*serverCode)(std::shared_ptr<net::ServerSocket> server, net::PeerSocket peer) = nullptr;
+	void (*storeData)(std::shared_ptr<ServerSocket> server, HostData* hostData) = nullptr;
+};
 
-		/* server control variables */
-		static std::condition_variable m_intSigCond;
-		static bool m_shutdownTCPservers;
-		/* This var allow us not to run the startServer method when the server is aleadry running */
-		bool m_serverStarted = false;
+/* net::TCPserver Class */
+class net::ServerSocket: public net::Socket
+{
+private:
+	/* Object's count */
+	static uint16_t serverInstances;
 
-		/* Retrieving data from threads */
-		bool dataReady = false;
-		std::condition_variable storeData_cv;
-		std::mutex storeData_mutex;
-		//std::shared_lock locker(storeData_mutex, std::defer_lock);
+	/* server control variables */
+	static std::condition_variable m_intSigCond;
+	static bool m_shutdownTCPservers;
+	/* This var allow us not to run the startServer method when the server is aleadry running */
+	bool m_serverStarted = false;
 
-		struct sockaddr_in* peerAddr;
-		struct sockaddr_in6* peerAddr6;
+	/* Retrieving data from threads */
+	bool dataReady = false;
+	std::condition_variable storeData_cv;
+	std::mutex storeData_mutex;
+	//std::shared_lock locker(storeData_mutex, std::defer_lock);
 
-		struct net::PeerInfo* peerInfo = new net::PeerInfo;
+	struct sockaddr_in* peerAddr;
+	struct sockaddr_in6* peerAddr6;
 
-		socklen_t *peerAddrSize;
-		uint32_t serverPort;
+	struct net::PeerInfo* peerInfo = new net::PeerInfo;
 
-		//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
+	socklen_t *peerAddrSize;
+	uint32_t serverPort;
 
-		/* Modification */
-		mutable std::shared_mutex fileMutex;
-		std::condition_variable	cv;
-		bool readyToProcess = false;
-		unsigned int numberOfThreads = NUM_OF_THREAD_LISTENER;
+	//static void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
 
-		/* End of Modification */
+	/* Modification */
+	mutable std::shared_mutex fileMutex;
+	std::condition_variable	cv;
+	bool readyToProcess = false;
+	unsigned int numberOfThreads = NUM_OF_THREAD_LISTENER;
 
-	public:
-		int test;
-		void setThreadNumber(unsigned int num) { this->numberOfThreads = num;}
-		unsigned int getNumberOfThreads(void) { return this->numberOfThreads; }
-		void startThreadedServer(unsigned int maxHost,
-			unsigned int numberOfThreads=NUM_OF_THREAD_LISTENER);
-		/* Monitors net::TCPserver::m_shutdownTCPservers and returns
-		** only when it value changes to "true" */
+	/* End of Modification */
 
-        // Initializes the socket and binds it.
-		TCPserver(const int Family, const char *serverAddr, uint16_t serverPort)
-			: net::TCPsocket(Family), serverPort(serverPort)
-        {
-            ++serverInstances;
-            try{
-                TCPsocket::socket();
-                TCPsocket::bind(serverAddr, serverPort);
-				peerAddrSize = new socklen_t;
-				if (this->addrFamily == AF_INET)
-					peerAddr = new sockaddr_in;
-				else
-					peerAddr6 = new sockaddr_in6;
+public:
+	int test;
+	void setThreadNumber(unsigned int num) { this->numberOfThreads = num;}
+	unsigned int getNumberOfThreads(void) { return this->numberOfThreads; }
+	void startThreadedServer(unsigned int maxHost,
+		unsigned int numberOfThreads=NUM_OF_THREAD_LISTENER);
+	/* Monitors net::TCPserver::m_shutdownTCPservers and returns
+	** only when it value changes to "true" */
 
-				this->setStatus(0);
-
-            } catch (SocketException& e) {
-                throw;
-            }
-        }
-
-		/* listen */
-		int listen(uint16_t maxHost);
-
-		/* accept */
-		net::TCPpeer accept(void);
-
-		/* Is*/
-		~TCPserver(void) {
-			delete peerAddrSize;
+    // Initializes the socket and binds it.
+	ServerSocket(const int Family, const char *serverAddr, uint16_t serverPort)
+		: net::Socket(Family), serverPort(serverPort)
+    {
+        ++serverInstances;
+        try{
+            Socket::socket();
+            Socket::bind(serverAddr, serverPort);
+			peerAddrSize = new socklen_t;
 			if (this->addrFamily == AF_INET)
-				delete peerAddr;
+				peerAddr = new sockaddr_in;
 			else
-				delete peerAddr6;
-			delete peerInfo;
-			--serverInstances;
-			if (serverInstances == 0)
-				;
-			if(isValid()) {
-				this->shutdown(SHUT_RDWR);
-				this->close();
-			}
-			//delete codePointer;
+				peerAddr6 = new sockaddr_in6;
+
+			this->setStatus(0);
+
+        } catch (SocketException& e) {
+            throw;
+        }
+    }
+
+	/* listen */
+	int listen(uint16_t maxHost);
+
+	/* accept */
+	net::PeerSocket accept(void);
+
+	/* Is*/
+	~ServerSocket(void) {
+		delete peerAddrSize;
+		if (this->addrFamily == AF_INET)
+			delete peerAddr;
+		else
+			delete peerAddr6;
+		delete peerInfo;
+		--serverInstances;
+		if (serverInstances == 0)
+			;
+		if(isValid()) {
+			this->shutdown(SHUT_RDWR);
+			this->close();
 		}
+		//delete codePointer;
+	}
 
-		void startServer(uint32_t maxHost);
+	void startServer(uint32_t maxHost);
 
-		/* checks if server has started */
-		bool hasStarted(void);
+	/* checks if server has started */
+	bool hasStarted(void);
 
-		/* checks is server has to shutdown */
-		bool hasToShutdown(void);
+	/* checks is server has to shutdown */
+	bool hasToShutdown(void);
 
-		/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
-		** instruct our program to block somewhere(in main() is a good idea)...the detached
-		** threads will receive a kill signal when the main() returns.
-		** net::wait() Pauses the application, allowing the detached threads to run until a
-		** SIGINT(ctrl-c) is sent to the program.*/
-		void wait(void);
-		bool waitForData(void);
+	/* net::TCPserver::startServer lunches detached thread, therefore, if we don't
+	** instruct our program to block somewhere(in main() is a good idea)...the detached
+	** threads will receive a kill signal when the main() returns.
+	** net::wait() Pauses the application, allowing the detached threads to run until a
+	** SIGINT(ctrl-c) is sent to the program.*/
+	void wait(void);
+	bool waitForData(void);
 
-		/* Signal handler */
-		static void signalHandler(int signalNum);
+	/* Signal handler */
+	static void signalHandler(int signalNum);
 
-		/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
-		void (*serverCode)(TCPpeer peer) = nullptr;
-		void (*serverCode2)(std::shared_ptr<net::TCPserver> server, TCPpeer peer) = nullptr;
-		/* Default Response 
-		This function is executed if you failed to point "serverCode */
-		void defaultResponse(net::TCPpeer& peer);
+	/* This struct has a function pointer which point to your server and takes TCPpeer class as its only argument*/
+	void (*serverCode)(PeerSocket peer) = nullptr;
+	void (*serverCode2)(std::shared_ptr<net::ServerSocket> server, PeerSocket peer) = nullptr;
+	/* Default Response 
+	This function is executed if you failed to point "serverCode */
+	void defaultResponse(net::PeerSocket& peer);
 
-		/************************************************ */
-		CodePointer codePointer; // new CodePointer();
+	/************************************************ */
+	CodePointer codePointer; // new CodePointer();
 
-		/********************************************/
-		//std::map<std::string, FileHandler*> OpenedFiles;
+	/********************************************/
+	//std::map<std::string, FileHandler*> OpenedFiles;
 
-		/**********************************************/
-		//std::map<std::string, std::string> cached;
+	/**********************************************/
+	//std::map<std::string, std::string> cached;
 
-		/***************************************************/
-		std::shared_mutex& getFileMutex(void) {
-			return fileMutex;
-		}
-		/********************************* */
-		std::deque<HostData*> dataFromThread;
+	/***************************************************/
+	std::shared_mutex& getFileMutex(void) {
+		return fileMutex;
+	}
+	/********************************* */
+	std::deque<HostData*> dataFromThread;
 
 };
 
-class HostData {
+class net::HostData {
 private:
 	std::string host;
 	u_int port;
@@ -194,13 +202,5 @@ public:
 		return data;
 	}
 };
-
-	/* */
-	void TCPserverThreadCore(std::shared_ptr<net::TCPserver> _server);
-
-	/* Default connection handler */
-	void handleConn(net::TCPpeer &peer);
-};
-
 
 #endif
