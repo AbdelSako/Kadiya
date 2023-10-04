@@ -228,8 +228,8 @@ ssize_t net::TCPpeer::recv(char* inBuffer, uint16_t inBufSize)
 	if (!this->isBlocking())
 		this->recvPoll(this->recvTimeout);
 
-	//byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
-	byteRecv = ::read(m_sockfd, inBuffer, inBufSize);
+	byteRecv = ::recv(m_sockfd, inBuffer, inBufSize - 12, 0);
+	//byteRecv = ::read(m_sockfd, inBuffer, inBufSize);
     if (byteRecv == -1) {
         //Set status and byteRecv to 0; to 0 because of the return value
         this->setStatus(this->getLastError());

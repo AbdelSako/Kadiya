@@ -188,7 +188,7 @@ namespace net
 		std::string ipAddress;
 		uint16_t portNumber;
 		bool keepAliveStatus = false;
-		u_int8_t DEFAULT_TIMEOUT = 5;
+		uint8_t DEFAULT_TIMEOUT = 5;
 		uint8_t recvTimeout = DEFAULT_TIMEOUT;
 		uint8_t sendTimeout = DEFAULT_TIMEOUT;
 	//	private:

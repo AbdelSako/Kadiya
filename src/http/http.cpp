@@ -317,7 +317,8 @@ bool http::isAllChunk(const std::string rawResponse)
 
 ssize_t http::read(net::TCPpeer& peer, std::string& rawData, uint16_t bufsize) {
 	ssize_t bytes, totalBytes = 0;
-	char tmpBuf[bufsize];
+	//char tmpBuf[bufsize];
+	char *tmpBuf = new char[bufsize + 1];
 	rawData.clear();
 	do {
 		std::memset(tmpBuf, 0, bufsize);
@@ -332,6 +333,8 @@ ssize_t http::read(net::TCPpeer& peer, std::string& rawData, uint16_t bufsize) {
 			}
 		}
 	} while (peer.availToRead());
+
+	delete [] tmpBuf;
 	
 	if (totalBytes == 0) return -1;
 	else return totalBytes;
