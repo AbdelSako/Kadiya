@@ -391,3 +391,7 @@ int net::Socket::getStatus(void) {
 void net::Socket::setStatus(int status) {
 	this->status = status;
 }
+
+void debugPrinter(const std::string &classMethod, const std::string &outputText) {
+	std::cout << "["<<classMethod <<"]" << ": " << outputText << std::endl;
+}

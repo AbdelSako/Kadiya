@@ -146,8 +146,9 @@ void net::ServerSocket::startThreadedServer(unsigned int maxHost,
             try
             {
                 peer = serverSharedPtr->accept();
-                std::cout << "[+] Accepted by thread ID: " <<
-                    std::this_thread::get_id() << "\n";
+                std::cout  << "[ServerSocket::startThreadedServer.acceptor]: "
+                    << "[+] Accepted by thread ID: "
+                    << std::this_thread::get_id() << "\n";
             }
             catch (net::SocketException& e)
             {
@@ -158,7 +159,8 @@ void net::ServerSocket::startThreadedServer(unsigned int maxHost,
             //ToDo: Remember to update the isValid()'s variable.
             if (!peer.isValid())
             {
-                std::cout << "[*] Failed to accept connection...\n";
+                debugPrinter("[ServerSocket::startThreadedServer.acceptor]", "[*] Failed to accept connection...");
+                //std::cout << "[*] Failed to accept connection...\n";
                 continue;
             }
             else

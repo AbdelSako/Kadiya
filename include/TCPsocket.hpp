@@ -262,4 +262,6 @@ public:
 	}
 };
 
+void debugPrinter(const std::string& classMethod, const std::string& outputText);
+
 #endif
