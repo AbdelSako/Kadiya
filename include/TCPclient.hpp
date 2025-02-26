@@ -20,7 +20,7 @@ namespace net
 
 		struct PeerInfo* peerInfo;
 	public:
-		ClientSocket(void): Socket() {
+		ClientSocket(): Socket() {
 #ifdef _WIN32
 			this->startWSA();	
 #endif
@@ -31,7 +31,7 @@ namespace net
 			this->ipstr = new char[INET6_ADDRSTRLEN];
 
 		}
-		~ClientSocket(void) {
+		~ClientSocket() {
 			if (this->isValid()) {
 				this->shutdown(0);
 				this->close();
@@ -42,7 +42,7 @@ namespace net
 			delete this->peerInfo;
 			delete ipstr;
 		}
-			PeerSocket connect(const std::string remoteAddr, uint16_t port);
+			PeerSocket connect(const std::string &remoteAddr, uint16_t port);
 	};
 };
 #endif

@@ -9,7 +9,7 @@
 
 /* CONNECT TO REMOTE HOST.
 the string "remoteAddr" could be a domain name or IPv4/IPv6 address */
-net::PeerSocket net::ClientSocket::connect(const std::string remoteAddr, uint16_t port)
+net::PeerSocket net::ClientSocket::connect(const std::string &remoteAddr, uint16_t port)
 {
     struct addrinfo m_hints, *m_remoteAddrInfo, *m_remoteAddrPtr;
     struct net::PeerInfo peerInfo;

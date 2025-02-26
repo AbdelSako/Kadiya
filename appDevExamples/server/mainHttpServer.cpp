@@ -1,17 +1,23 @@
 #include "TCPserver.hpp"
 #include "TCPclient.hpp"
 #include "http/httpServer/httpServer.hpp"
+#include <filesystem>
 #define LISTENERS 5
 #define MAXHOST 20
 
 
+void printCurrentDirectory();
+
 void processData(net::ServerSocket server);
 
+std::string getHomeDirectory();
 
 int main(void)
 {
 	// Server object pointer.
 	net::ServerSocket* server;
+	printCurrentDirectory();
+	std::cout << "Home Directory:" << getHomeDirectory() << std::endl;
 
 	try {
 		/* Allocation and instantiation of the server object.
@@ -20,7 +26,9 @@ int main(void)
 		std::cout << "[+] Preparing threaded acceptors.\n";
 		server = new net::ServerSocket(AF_INET, "127.0.0.1", 50505);
 
+
 		// Callback of server object is now pointing to the http proxy server function
+		/* This is where execution of the http server begins. */
 		server->codePointer.serverCode = http::httpServer;
 	}
 	catch (net::SocketException& e) {
@@ -69,4 +77,49 @@ int main(void)
 void processData(net::ServerSocket &server, int n) {
 	auto data = server.dataFromThread[n];
 	std::cout << data << std::endl;
+}
+
+
+void printCurrentDirectory() {
+	try {
+		std::filesystem::path currentPath = std::filesystem::current_path();
+		std::cout << "Current directory: " << currentPath.string() << std::endl;
+	} catch (const std::filesystem::filesystem_error& e) {
+		std::cerr << "Error getting current directory: " << e.what() << std::endl;
+	}
+}
+
+std::string getHomeDirectory() {
+#ifdef _WIN32
+	// Windows
+	const char* homeDrive = std::getenv("HOMEDRIVE");
+	const char* homePath = std::getenv("HOMEPATH");
+	if (homeDrive && homePath) {
+		return std::string(homeDrive) + std::string(homePath);
+	}
+#else
+	// POSIX (Linux, macOS, etc.)
+	const char* homeDir = std::getenv("HOME");
+	if (homeDir) {
+		return std::string(homeDir);
+	}
+#endif
+
+	// Fallback using filesystem (C++17)
+#ifdef __cpp_lib_filesystem
+	try {
+		return std::filesystem::path(std::getenv("USERPROFILE")).string(); // windows
+	} catch (const std::exception& e) {
+		try{
+			return std::filesystem::path(std::getenv("HOME")).string(); // posix
+		} catch (const std::exception& e2){
+			return ""; // Unable to find home directory
+		}
+
+	}
+#else
+	return ""; // Unable to find home directory
+#endif
+
+	return ""; // Unable to find home directory
 }

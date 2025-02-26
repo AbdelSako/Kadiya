@@ -36,6 +36,7 @@ including "winsock2.h" */
 #include <string>
 #include <cstring>
 #include <csignal>
+#include <cstdint>
 
 //#include "__TCPsocket.hpp"
 
